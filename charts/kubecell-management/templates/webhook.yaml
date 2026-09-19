@@ -1,0 +1,133 @@
+{{- if .Values.webhook.enabled }}
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: kubecell-mutating-webhook
+  labels:
+    app.kubernetes.io/managed-by: kubecell
+  annotations:
+    cert-manager.io/inject-ca-from: {{ .Values.namespace }}/kubecell-webhook-cert
+webhooks:
+- name: mcell.kubecell.io
+  admissionReviewVersions: [v1]
+  sideEffects: None
+  failurePolicy: Fail
+  clientConfig:
+    service:
+      name: {{ .Values.webhook.serviceName }}
+      namespace: {{ .Values.namespace }}
+      path: /mutate-kubecell-io-v1alpha1-cell
+  rules:
+  - apiGroups: [kubecell.io]
+    apiVersions: [v1alpha1]
+    operations: [CREATE, UPDATE]
+    resources: [cells]
+- name: mvirtualcluster.kubecell.io
+  admissionReviewVersions: [v1]
+  sideEffects: None
+  failurePolicy: Fail
+  clientConfig:
+    service:
+      name: {{ .Values.webhook.serviceName }}
+      namespace: {{ .Values.namespace }}
+      path: /mutate-kubecell-io-v1alpha1-virtualcluster
+  rules:
+  - apiGroups: [kubecell.io]
+    apiVersions: [v1alpha1]
+    operations: [CREATE, UPDATE]
+    resources: [virtualclusters]
+- name: mvirtualclusterplan.kubecell.io
+  admissionReviewVersions: [v1]
+  sideEffects: None
+  failurePolicy: Fail
+  clientConfig:
+    service:
+      name: {{ .Values.webhook.serviceName }}
+      namespace: {{ .Values.namespace }}
+      path: /mutate-kubecell-io-v1alpha1-virtualclusterplan
+  rules:
+  - apiGroups: [kubecell.io]
+    apiVersions: [v1alpha1]
+    operations: [CREATE, UPDATE]
+    resources: [virtualclusterplans]
+- name: mvirtualnodeclass.kubecell.io
+  admissionReviewVersions: [v1]
+  sideEffects: None
+  failurePolicy: Fail
+  clientConfig:
+    service:
+      name: {{ .Values.webhook.serviceName }}
+      namespace: {{ .Values.namespace }}
+      path: /mutate-kubecell-io-v1alpha1-virtualnodeclass
+  rules:
+  - apiGroups: [kubecell.io]
+    apiVersions: [v1alpha1]
+    operations: [CREATE, UPDATE]
+    resources: [virtualnodeclasses]
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: kubecell-validating-webhook
+  labels:
+    app.kubernetes.io/managed-by: kubecell
+  annotations:
+    cert-manager.io/inject-ca-from: {{ .Values.namespace }}/kubecell-webhook-cert
+webhooks:
+- name: vcell.kubecell.io
+  admissionReviewVersions: [v1]
+  sideEffects: None
+  failurePolicy: Fail
+  clientConfig:
+    service:
+      name: {{ .Values.webhook.serviceName }}
+      namespace: {{ .Values.namespace }}
+      path: /validate-kubecell-io-v1alpha1-cell
+  rules:
+  - apiGroups: [kubecell.io]
+    apiVersions: [v1alpha1]
+    operations: [CREATE, UPDATE, DELETE]
+    resources: [cells]
+- name: vvirtualcluster.kubecell.io
+  admissionReviewVersions: [v1]
+  sideEffects: None
+  failurePolicy: Fail
+  clientConfig:
+    service:
+      name: {{ .Values.webhook.serviceName }}
+      namespace: {{ .Values.namespace }}
+      path: /validate-kubecell-io-v1alpha1-virtualcluster
+  rules:
+  - apiGroups: [kubecell.io]
+    apiVersions: [v1alpha1]
+    operations: [CREATE, UPDATE, DELETE]
+    resources: [virtualclusters]
+- name: vvirtualclusterplan.kubecell.io
+  admissionReviewVersions: [v1]
+  sideEffects: None
+  failurePolicy: Fail
+  clientConfig:
+    service:
+      name: {{ .Values.webhook.serviceName }}
+      namespace: {{ .Values.namespace }}
+      path: /validate-kubecell-io-v1alpha1-virtualclusterplan
+  rules:
+  - apiGroups: [kubecell.io]
+    apiVersions: [v1alpha1]
+    operations: [CREATE, UPDATE, DELETE]
+    resources: [virtualclusterplans]
+- name: vvirtualnodeclass.kubecell.io
+  admissionReviewVersions: [v1]
+  sideEffects: None
+  failurePolicy: Fail
+  clientConfig:
+    service:
+      name: {{ .Values.webhook.serviceName }}
+      namespace: {{ .Values.namespace }}
+      path: /validate-kubecell-io-v1alpha1-virtualnodeclass
+  rules:
+  - apiGroups: [kubecell.io]
+    apiVersions: [v1alpha1]
+    operations: [CREATE, UPDATE, DELETE]
+    resources: [virtualnodeclasses]
+{{- end }}

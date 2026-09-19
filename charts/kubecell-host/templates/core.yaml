@@ -1,0 +1,137 @@
+{{- if .Values.namespaceCreate }}
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .Values.namespace }}
+  labels:
+    app.kubernetes.io/managed-by: kubecell
+---
+{{- end }}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ .Values.serviceAccount.name }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app.kubernetes.io/managed-by: kubecell
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kubecell-host-config
+  namespace: {{ .Values.namespace }}
+  labels:
+    app.kubernetes.io/managed-by: kubecell
+data:
+  managed-service-account-name: {{ .Values.managedServiceAccountName | quote }}
+  profile-label-key: {{ .Values.profileLabelKey | quote }}
+{{- if .Values.webhook.enabled }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kubecell-host-webhook
+  namespace: {{ .Values.namespace }}
+  labels:
+    app.kubernetes.io/name: kubecell-host-webhook
+    app.kubernetes.io/managed-by: kubecell
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: kubecell-host-webhook
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: kubecell-host-webhook
+        app.kubernetes.io/managed-by: kubecell
+    spec:
+      serviceAccountName: {{ .Values.serviceAccount.name }}
+      containers:
+      - name: webhook
+        image: {{ .Values.image.repository }}{{ if .Values.image.digest }}@{{ .Values.image.digest }}{{ else }}:{{ .Values.image.tag }}{{ end }}
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        args:
+        - --host-admission-only
+        - --webhook-cert-path=/tmp/k8s-webhook-server/serving-certs
+        ports:
+        - name: webhook
+          containerPort: 9443
+        volumeMounts:
+        - name: webhook-certs
+          mountPath: /tmp/k8s-webhook-server/serving-certs
+          readOnly: true
+      volumes:
+      - name: webhook-certs
+        secret:
+          secretName: {{ .Values.webhook.certificateSecretName }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.webhook.serviceName }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app.kubernetes.io/managed-by: kubecell
+spec:
+  selector:
+    app.kubernetes.io/name: kubecell-host-webhook
+  ports:
+  - name: https
+    port: 443
+    targetPort: webhook
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: kubecell-host-webhook-selfsigned
+  namespace: {{ .Values.namespace }}
+  labels:
+    app.kubernetes.io/managed-by: kubecell
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: kubecell-host-webhook-cert
+  namespace: {{ .Values.namespace }}
+  labels:
+    app.kubernetes.io/managed-by: kubecell
+spec:
+  secretName: {{ .Values.webhook.certificateSecretName }}
+  dnsNames:
+  - {{ .Values.webhook.serviceName }}.{{ .Values.namespace }}.svc
+  - {{ .Values.webhook.serviceName }}.{{ .Values.namespace }}.svc.cluster.local
+  issuerRef:
+    name: kubecell-host-webhook-selfsigned
+    kind: Issuer
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: kubecell-host-mutating-webhook
+  labels:
+    app.kubernetes.io/managed-by: kubecell
+  annotations:
+    cert-manager.io/inject-ca-from: {{ .Values.namespace }}/kubecell-host-webhook-cert
+webhooks:
+- name: mpod.kubecell.io
+  admissionReviewVersions: [v1]
+  sideEffects: None
+  failurePolicy: Fail
+  clientConfig:
+    service:
+      name: {{ .Values.webhook.serviceName }}
+      namespace: {{ .Values.namespace }}
+      path: /mutate-v1-pod
+  namespaceSelector:
+    matchExpressions:
+    - key: kubecell.io/virtual-cluster-uid
+      operator: Exists
+  rules:
+  - apiGroups: [""]
+    apiVersions: [v1]
+    operations: [CREATE]
+    resources: [pods]
+{{- end }}

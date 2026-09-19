@@ -1,0 +1,11 @@
+component: open-cluster-management
+apiVersion: v1.3.1
+installation: separate-platform-bundle
+hub: required
+clusterProxy: required
+managedServiceAccount: required
+helmDependency: false
+ownership: OCM-installer
+bundlePaths:
+  hub: ocm/bundle.yaml
+  join: ocm/join.yaml

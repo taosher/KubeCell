@@ -1,0 +1,21 @@
+# More info: https://docs.docker.com/engine/reference/builder/#dockerignore-file
+# Ignore everything by default and re-include only needed files
+**
+
+# Re-include production Go source directories (but not *_test.go)
+!api/
+!api/**/*.go
+!cmd/
+!cmd/**/*.go
+!internal/
+!internal/**/*.go
+**/*_test.go
+
+# The fast image path packages a locally cross-compiled manager binary.
+!bin/
+!bin/manager-*
+!Dockerfile.runtime
+
+# Re-include Go module files
+!go.mod
+!go.sum

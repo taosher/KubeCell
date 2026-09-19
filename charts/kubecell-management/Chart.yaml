@@ -1,0 +1,12 @@
+apiVersion: v2
+name: kubecell-management
+description: KubeCell Management Cluster controller and CRDs
+type: application
+version: 0.1.0
+appVersion: 0.1.0
+
+dependencies:
+  - name: kite
+    version: 0.15.1
+    repository: file://charts/kite-0.15.1.tgz
+    condition: kite.enabled

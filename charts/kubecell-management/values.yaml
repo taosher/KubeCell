@@ -1,0 +1,61 @@
+image:
+  repository: ghcr.io/kubecell/kubecell
+  tag: dev
+  digest: ""
+  pullPolicy: IfNotPresent
+replicaCount: 1
+# Controller container quotas and security baseline: aligned with the manager binary USER 65532.
+controller:
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: "1"
+      memory: 1Gi
+namespace: kubecell-system
+# appsSuffix is the Ingress hostname suffix (bare domain, e.g. apps.example.com).
+# The controller refuses to start when it is empty (see technical-design.md).
+appsSuffix: ""
+serviceAccount:
+  name: kubecell-controller
+ocm:
+  managedClusterNamespaceConvention: name
+  proxyProfile: managed-service-account
+  managedServiceAccountName: kubecell-host-reader
+  proxyAddress: proxy-entrypoint.open-cluster-management-addon.svc:8090
+  hostServerName: kubernetes.default.svc
+  proxyTLS:
+    secretName: kubecell-ocm-proxy-tls
+    caKey: ca.crt
+    clientCertKey: tls.crt
+    clientKey: tls.key
+webhook:
+  enabled: true
+  serviceName: kubecell-webhook
+  certificateSecretName: kubecell-webhook-cert
+  certManager:
+    enabled: true
+metrics:
+  enabled: true
+# Kite dashboard: vendored official chart with a conditional dependency, enabled by default.
+# Image is pinned and verified (ghcr.io/kite-org/kite:v0.15.1); the superUser password must never be committed,
+# pass it at install time with --set kite.config.superUser.password=...
+kite:
+  enabled: true
+  fullnameOverride: kubecell-kite
+  service:
+    type: NodePort
+  db:
+    type: sqlite
+    sqlite:
+      persistence:
+        pvc:
+          enabled: true
+          storageClass: local-path
+          size: 5Gi
+  config:
+    enabled: true
+    superUser:
+      username: admin
+      password: ""

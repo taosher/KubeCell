@@ -1,0 +1,25 @@
+/artifacts/
+/bin/
+/build/
+/cover.out
+
+# Local experiment output (smoke scripts, temporary evidence, never committed)
+.out/
+archive/
+
+# Local environment notes (machine addresses, SSH users, lab topology).
+# Keep a generic template as docs/environment.example.md instead.
+docs/environment.md
+
+# Internal bug log with lab-specific history; not part of the public project.
+bug-track.md
+
+# Local operator artifacts and credentials (never committed)
+*.kubeconfig
+kubeconfig*
+*.key
+*.pem
+.env
+.env.*
+dist/
+artifacts/

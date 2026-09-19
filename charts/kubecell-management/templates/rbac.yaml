@@ -1,0 +1,77 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kubecell-controller
+  labels:
+    app.kubernetes.io/managed-by: kubecell
+rules:
+- apiGroups: [kubecell.io]
+  resources: [cells, virtualclusters, virtualclusterplans, virtualnodeclasses]
+  verbs: [get, list, watch, create, update, patch, delete]
+- apiGroups: [kubecell.io]
+  resources: [cells/status, virtualclusters/status, virtualclusterplans/status, virtualnodeclasses/status]
+  verbs: [get, update, patch]
+- apiGroups: [work.open-cluster-management.io]
+  resources: [manifestworks]
+  verbs: [get, list, watch, create, update, patch, delete]
+- apiGroups: [coordination.k8s.io]
+  resources: [leases]
+  verbs: [get, list, watch]
+- apiGroups: [""]
+  resources: [events]
+  verbs: [create, patch]
+- apiGroups: [cluster.open-cluster-management.io]
+  resources: [managedclusters]
+  verbs: [get, list, watch]
+- apiGroups: [""]
+  resources: [secrets]
+  verbs: [get, list, watch, create, update, patch, delete]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kubecell-controller
+  labels:
+    app.kubernetes.io/managed-by: kubecell
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kubecell-controller
+subjects:
+- kind: ServiceAccount
+  name: {{ .Values.serviceAccount.name }}
+  namespace: {{ .Values.namespace }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: kubecell-controller-leader-election
+  namespace: {{ .Values.namespace }}
+  labels:
+    app.kubernetes.io/managed-by: kubecell
+rules:
+- apiGroups: [""]
+  resources: [configmaps]
+  verbs: [get, list, watch, create, update, patch, delete]
+- apiGroups: [coordination.k8s.io]
+  resources: [leases]
+  verbs: [get, list, watch, create, update, patch, delete]
+- apiGroups: [""]
+  resources: [events]
+  verbs: [create, patch]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: kubecell-controller-leader-election
+  namespace: {{ .Values.namespace }}
+  labels:
+    app.kubernetes.io/managed-by: kubecell
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: kubecell-controller-leader-election
+subjects:
+- kind: ServiceAccount
+  name: {{ .Values.serviceAccount.name }}
+  namespace: {{ .Values.namespace }}

@@ -1,0 +1,133 @@
+{{- if .Values.rbac.observerCreate }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kubecell-host-observer
+  labels:
+    app.kubernetes.io/managed-by: kubecell
+rules:
+- apiGroups: [apiextensions.k8s.io]
+  resources: [customresourcedefinitions]
+  verbs: [get, list, watch]
+- apiGroups: [""]
+  resources: [nodes, pods, services, endpointslices, events, namespaces, resourcequotas, limitranges, persistentvolumes, persistentvolumeclaims, secrets]
+  verbs: [get, list, watch]
+- apiGroups: [apps]
+  resources: [deployments, daemonsets, statefulsets, replicasets]
+  verbs: [get, list, watch]
+- apiGroups: [k3k.io]
+  resources: [clusters, virtualclusterpolicies]
+  verbs: [get, list, watch]
+- apiGroups: [storage.k8s.io]
+  resources: [csidrivers, storageclasses]
+  verbs: [get, list, watch]
+- apiGroups: [coordination.k8s.io]
+  resources: [leases]
+  verbs: [get]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kubecell-host-observer
+  labels:
+    app.kubernetes.io/managed-by: kubecell
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kubecell-host-observer
+subjects:
+- kind: ServiceAccount
+  name: {{ .Values.serviceAccount.name }}
+  namespace: {{ .Values.namespace }}
+{{- end }}
+{{- if .Values.rbac.webhookCreate }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kubecell-host-webhook
+  labels:
+    app.kubernetes.io/managed-by: kubecell
+rules:
+- apiGroups: [""]
+  resources: [namespaces, persistentvolumes, persistentvolumeclaims]
+  verbs: [get, list, watch]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kubecell-host-webhook
+  labels:
+    app.kubernetes.io/managed-by: kubecell
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kubecell-host-webhook
+subjects:
+- kind: ServiceAccount
+  name: {{ .Values.serviceAccount.name }}
+  namespace: {{ .Values.namespace }}
+{{- end }}
+{{- if .Values.rbac.managedServiceAccountBindingCreate }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kubecell-managed-service-account-observer
+  labels:
+    app.kubernetes.io/managed-by: kubecell
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kubecell-host-observer
+subjects:
+- kind: ServiceAccount
+  name: {{ .Values.managedServiceAccountName }}
+  namespace: {{ .Values.managedServiceAccountNamespace }}
+{{- end }}
+{{- if .Values.rbac.foundationApplierCreate }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kubecell-foundation-applier
+  labels:
+    app.kubernetes.io/managed-by: kubecell
+rules:
+- apiGroups: [""]
+  resources: [namespaces]
+  verbs: [get, list, watch, create, update, patch, delete]
+- apiGroups: [""]
+  resources: [resourcequotas, limitranges, secrets]
+  verbs: [get, list, watch, create, update, patch, delete]
+- apiGroups: [""]
+  resources: [services, endpoints]
+  verbs: [get, list, watch, create, update, patch, delete]
+- apiGroups: [networking.k8s.io]
+  resources: [networkpolicies]
+  verbs: [get, list, watch, create, update, patch, delete]
+- apiGroups: [networking.k8s.io]
+  resources: [ingresses]
+  verbs: [get, list, watch, create, update, patch, delete]
+- apiGroups: [rbac.authorization.k8s.io]
+  resources: [roles, rolebindings]
+  verbs: [get, list, watch, create, update, patch, delete]
+- apiGroups: [k3k.io]
+  resources: [clusters, virtualclusterpolicies]
+  verbs: [get, list, watch, create, update, patch, delete]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kubecell-foundation-applier
+  labels:
+    app.kubernetes.io/managed-by: kubecell
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kubecell-foundation-applier
+subjects:
+- kind: ServiceAccount
+  name: {{ .Values.ocm.workAgentServiceAccountName }}
+  namespace: {{ .Values.ocm.workAgentServiceAccountNamespace }}
+{{- end }}

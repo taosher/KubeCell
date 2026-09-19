@@ -1,0 +1,26 @@
+namespace: kubecell-system
+namespaceCreate: false
+serviceAccount:
+  name: kubecell-host-observer
+rbac:
+  observerCreate: true
+  webhookCreate: true
+  managedServiceAccountBindingCreate: true
+  foundationApplierCreate: true
+managedServiceAccountName: kubecell-host-reader
+managedServiceAccountNamespace: open-cluster-management-agent-addon
+ocm:
+  workAgentServiceAccountName: klusterlet-work-sa
+  workAgentServiceAccountNamespace: open-cluster-management-agent
+profileLabelKey: hardware.kubecell.io/profile
+image:
+  repository: ghcr.io/kubecell/kubecell
+  tag: dev
+  digest: ""
+  pullPolicy: IfNotPresent
+webhook:
+  enabled: true
+  serviceName: kubecell-host-webhook
+  certificateSecretName: kubecell-host-webhook-cert
+  certManager:
+    enabled: true

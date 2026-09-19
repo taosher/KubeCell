@@ -1,0 +1,10 @@
+FROM scratch
+
+ARG MANAGER_BINARY
+ARG SOURCE_SHA256
+COPY ${MANAGER_BINARY} /manager
+
+LABEL io.kubecell.source-sha256=${SOURCE_SHA256}
+
+USER 65532:65532
+ENTRYPOINT ["/manager"]

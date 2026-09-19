@@ -1,0 +1,176 @@
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: mutating-webhook-configuration
+webhooks:
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /mutate-kubecell-io-v1alpha1-cell
+  failurePolicy: Fail
+  name: mcell.kubecell.io
+  rules:
+  - apiGroups:
+    - kubecell.io
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - cells
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /mutate-kubecell-io-v1alpha1-virtualcluster
+  failurePolicy: Fail
+  name: mvirtualcluster.kubecell.io
+  rules:
+  - apiGroups:
+    - kubecell.io
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - virtualclusters
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /mutate-kubecell-io-v1alpha1-virtualclusterplan
+  failurePolicy: Fail
+  name: mvirtualclusterplan.kubecell.io
+  rules:
+  - apiGroups:
+    - kubecell.io
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - virtualclusterplans
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /mutate-kubecell-io-v1alpha1-virtualnodeclass
+  failurePolicy: Fail
+  name: mvirtualnodeclass.kubecell.io
+  rules:
+  - apiGroups:
+    - kubecell.io
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - virtualnodeclasses
+  sideEffects: None
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: validating-webhook-configuration
+webhooks:
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /validate-kubecell-io-v1alpha1-cell
+  failurePolicy: Fail
+  name: vcell.kubecell.io
+  rules:
+  - apiGroups:
+    - kubecell.io
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    - DELETE
+    resources:
+    - cells
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /validate-kubecell-io-v1alpha1-virtualcluster
+  failurePolicy: Fail
+  name: vvirtualcluster.kubecell.io
+  rules:
+  - apiGroups:
+    - kubecell.io
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    - DELETE
+    resources:
+    - virtualclusters
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /validate-kubecell-io-v1alpha1-virtualclusterplan
+  failurePolicy: Fail
+  name: vvirtualclusterplan.kubecell.io
+  rules:
+  - apiGroups:
+    - kubecell.io
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    - DELETE
+    resources:
+    - virtualclusterplans
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /validate-kubecell-io-v1alpha1-virtualnodeclass
+  failurePolicy: Fail
+  name: vvirtualnodeclass.kubecell.io
+  rules:
+  - apiGroups:
+    - kubecell.io
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    - DELETE
+    resources:
+    - virtualnodeclasses
+  sideEffects: None

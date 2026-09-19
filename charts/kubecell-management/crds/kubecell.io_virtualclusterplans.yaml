@@ -1,0 +1,162 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.19.0
+  name: virtualclusterplans.kubecell.io
+spec:
+  group: kubecell.io
+  names:
+    kind: VirtualClusterPlan
+    listKind: VirtualClusterPlanList
+    plural: virtualclusterplans
+    shortNames:
+    - vcp
+    singular: virtualclusterplan
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .status.decision
+      name: Decision
+      type: string
+    - jsonPath: .status.expiresAt
+      name: Expires
+      type: date
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            properties:
+              virtualCluster:
+                properties:
+                  cellRef:
+                    properties:
+                      name:
+                        type: string
+                      namespace:
+                        type: string
+                    required:
+                    - name
+                    type: object
+                  classRef:
+                    properties:
+                      name:
+                        type: string
+                      namespace:
+                        type: string
+                    required:
+                    - name
+                    type: object
+                required:
+                - cellRef
+                - classRef
+                type: object
+            required:
+            - virtualCluster
+            type: object
+          status:
+            properties:
+              checks:
+                items:
+                  properties:
+                    message:
+                      maxLength: 1024
+                      type: string
+                    name:
+                      maxLength: 64
+                      type: string
+                    observedAt:
+                      format: date-time
+                      type: string
+                    reason:
+                      maxLength: 128
+                      type: string
+                    status:
+                      type: string
+                  required:
+                  - name
+                  - observedAt
+                  - reason
+                  - status
+                  type: object
+                maxItems: 16
+                type: array
+              decision:
+                type: string
+              expiresAt:
+                format: date-time
+                type: string
+              inventoryFresh:
+                type: boolean
+              inventoryObservedAt:
+                format: date-time
+                type: string
+              observedGeneration:
+                format: int64
+                type: integer
+              phase:
+                type: string
+              resolved:
+                properties:
+                  cellUID:
+                    type: string
+                  childK3sVersion:
+                    type: string
+                  classUID:
+                    type: string
+                  k3kVersion:
+                    type: string
+                  machineProfileName:
+                    type: string
+                  managedClusterName:
+                    type: string
+                  profileHash:
+                    type: string
+                  reservation:
+                    additionalProperties:
+                      anyOf:
+                      - type: integer
+                      - type: string
+                      pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                      x-kubernetes-int-or-string: true
+                    description: ResourceList is a set of (resource name, quantity)
+                      pairs.
+                    type: object
+                  storageClassName:
+                    type: string
+                  workloadRequests:
+                    additionalProperties:
+                      anyOf:
+                      - type: integer
+                      - type: string
+                      pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                      x-kubernetes-int-or-string: true
+                    description: ResourceList is a set of (resource name, quantity)
+                      pairs.
+                    type: object
+                type: object
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
