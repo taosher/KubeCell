@@ -274,17 +274,17 @@ export default function QuickstartPage() {
             {
               href: "/docs/concepts/",
               title: "Understand the model",
-              description: "Cells, classes, plans, and the single logical node.",
+              description: "How hosts, quota tiers, and clusters fit together.",
             },
             {
               href: "/docs/operations/",
               title: "Operate it",
-              description: "Inventory, credentials, quota changes, deletion.",
+              description: "Capacity, credentials, quota changes, deletion.",
             },
             {
               href: "/docs/security/",
               title: "Audit isolation",
-              description: "Quota, policy, and admission rules on the host.",
+              description: "Quotas, network policy, and blocked workloads.",
             },
             {
               href: "/docs/troubleshooting/",

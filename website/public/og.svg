@@ -64,13 +64,13 @@
 
   <text x="152" y="122" font-family="Helvetica, Arial, sans-serif" font-size="44" font-weight="bold" fill="#e8eefb">KubeCell</text>
 
-  <text x="80" y="270" font-family="Helvetica, Arial, sans-serif" font-size="64" font-weight="bold" fill="#e8eefb">Isolated Kubernetes child clusters</text>
-  <text x="80" y="350" font-family="Helvetica, Arial, sans-serif" font-size="64" font-weight="bold" fill="#e8eefb">on shared bare metal</text>
+  <text x="80" y="270" font-family="Helvetica, Arial, sans-serif" font-size="50" font-weight="bold" fill="#e8eefb">Give every developer their own</text>
+  <text x="80" y="350" font-family="Helvetica, Arial, sans-serif" font-size="50" font-weight="bold" fill="#e8eefb">Kubernetes cluster, on shared hardware</text>
 
   <rect x="80" y="396" width="72" height="6" rx="3" fill="url(#accent)"/>
 
-  <text x="80" y="452" font-family="Helvetica, Arial, sans-serif" font-size="27" fill="#93a4c3">One management cluster declares intent. Every Cell host runs the workloads.</text>
-  <text x="80" y="494" font-family="Helvetica, Arial, sans-serif" font-size="27" fill="#93a4c3">Hard quota isolation, TopoLVM storage, unified accelerators. No forks.</text>
+  <text x="80" y="452" font-family="Helvetica, Arial, sans-serif" font-size="27" fill="#93a4c3">Standard kubectl. Hard CPU, memory, and GPU quotas.</text>
+  <text x="80" y="494" font-family="Helvetica, Arial, sans-serif" font-size="27" fill="#93a4c3">Isolated control planes, persistent storage, ready in minutes.</text>
 
-  <text x="80" y="566" font-family="Courier, monospace" font-size="21" fill="#7fb6ff">kubecell.io/v1alpha1   ·   K3s   ·   K3k   ·   OCM   ·   TopoLVM   ·   Traefik</text>
+  <text x="80" y="566" font-family="Courier, monospace" font-size="21" fill="#7fb6ff">K3s   ·   kubectl   ·   Helm   ·   Traefik   ·   TopoLVM   ·   NVIDIA   ·   Ascend</text>
 </svg>

@@ -64,7 +64,8 @@ jobs:
           test -f dist/client/quickstart/index.html
 
       - name: Upload Pages artifact
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        # PRs only build. Pushes and manual runs (any branch) can deploy.
+        if: github.event_name != 'pull_request'
         uses: actions/upload-artifact@v4
         with:
           name: website-dist
@@ -73,7 +74,9 @@ jobs:
 
   deploy:
     name: Deploy to Cloudflare Pages
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    # Push to main => production deployment.
+    # Manual run on any branch => preview deployment (--branch below).
+    if: github.event_name != 'pull_request'
     needs: build
     runs-on: ubuntu-latest
     environment:

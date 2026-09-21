@@ -5,7 +5,7 @@ import { ArrowRight, Github, Terminal as TerminalIcon } from "lucide-react";
 
 import { BlurFade } from "@/components/magicui/blur-fade";
 import { AnimatedGridPattern } from "@/components/magicui/animated-grid-pattern";
-import { AuroraText } from "@/components/magicui/aurora-text";
+import { AnimatedGradientText } from "@/components/magicui/animated-gradient-text";
 import { AnimatedShinyText } from "@/components/magicui/animated-shiny-text";
 import { BorderBeam } from "@/components/magicui/border-beam";
 import { NumberTicker } from "@/components/magicui/number-ticker";
@@ -26,9 +26,9 @@ spec:
   classRef: {name: ascend-910b}`;
 
 const heroStats = [
-  { value: 1, suffix: "", label: "Kubernetes cluster per developer" },
-  { value: 8, suffix: "", label: "lines to create one" },
-  { value: 20, suffix: " min", label: "from apply to Ready" },
+  { value: 0, suffix: "", label: "VMs to manage" },
+  { value: 8, suffix: "", label: "lines to create a cluster" },
+  { value: 20, suffix: " min", label: "from apply to first Ready" },
   { value: 100, suffix: "%", label: "standard kubectl, Helm, and CI" },
 ];
 
@@ -64,8 +64,12 @@ export function Hero() {
           </BlurFade>
 
           <BlurFade delay={0.08} inView>
-            <h1 className="mt-6 text-balance text-4xl font-semibold leading-[1.08] tracking-tight text-foreground sm:text-6xl">
-              One Kubernetes cluster <AuroraText>per developer</AuroraText>, on shared bare metal
+            <h1 className="mt-6 text-pretty text-4xl font-semibold leading-[1.12] tracking-tight text-foreground sm:text-5xl">
+              Give every developer{" "}
+              <br className="hidden sm:inline" />
+              <AnimatedGradientText colorFrom="#7fb6ff" colorTo="#c4b5fd" speed={1}>
+                their own Kubernetes cluster
+              </AnimatedGradientText>
             </h1>
           </BlurFade>
 
@@ -87,10 +91,10 @@ export function Hero() {
 
           <BlurFade delay={0.16} inView>
             <p className="mx-auto mt-6 max-w-2xl text-pretty text-base leading-7 text-muted-foreground sm:text-lg">
-              KubeCell gives every developer their own isolated Kubernetes cluster on the servers
-              you already own. Standard <span className="text-foreground/90">kubectl</span>, a real
-              control plane, persistent storage, and hard CPU, memory, and GPU quotas — without a VM
-              per person or a shared namespace everyone has to trust.
+              Each developer gets an isolated cluster on the hardware you already own: standard{" "}
+              <span className="text-foreground/90">kubectl</span>, a real control plane, persistent
+              storage, and hard CPU, memory, and GPU quotas. No VM per person, no shared namespace
+              everyone has to trust.
             </p>
           </BlurFade>
 

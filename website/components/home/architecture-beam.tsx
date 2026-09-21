@@ -21,7 +21,7 @@ const nodes: Record<Variant, { left: BeamNode[]; middle: BeamNode[]; right: Beam
       { icon: CloudCog, title: "KubeCell", subtitle: "one management cluster" },
     ],
     middle: [
-      { icon: Layers, title: "Host setup", subtitle: "namespace, quota, network" },
+      { icon: Layers, title: "Host setup", subtitle: "namespace + quota" },
       { icon: Workflow, title: "Cluster creation", subtitle: "control plane + storage" },
     ],
     right: [

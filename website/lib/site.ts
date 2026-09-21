@@ -1,7 +1,7 @@
 export const siteConfig = {
   name: "KubeCell",
-  tagline: "A Kubernetes cluster for every developer, on hardware you already own",
-  title: "KubeCell — A Kubernetes cluster for every developer, on shared bare metal",
+  tagline: "Give every developer their own Kubernetes cluster, on hardware you already own",
+  title: "KubeCell — A Kubernetes cluster for every developer on shared bare metal",
   description:
     "KubeCell gives every developer their own isolated Kubernetes cluster on the servers you already run. Standard kubectl, hard CPU/memory/GPU quotas, persistent storage, and a kubeconfig in minutes.",
   shortDescription:

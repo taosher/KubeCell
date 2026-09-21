@@ -23,11 +23,11 @@ export default function DocsOverviewPage() {
         KubeCell overview
       </h1>
       <p className="mt-5 text-base leading-7 text-muted-foreground">
-        KubeCell is a Kubernetes Operator that provisions isolated Kubernetes child clusters —{" "}
-        <strong>VirtualClusters</strong> — on shared physical hosts. A single management cluster holds
-        the desired state. Each Cell host cluster runs the workloads. Developers get a standard,
-        kubectl-compatible child K3s API with hard quota isolation, reflected TopoLVM storage, and
-        unified accelerator semantics.
+        KubeCell gives every developer an isolated Kubernetes cluster — a{" "}
+        <strong>VirtualCluster</strong> — on shared physical hosts. A single management cluster holds
+        the desired state; each Cell host runs the workloads. Developers get a standard,
+        kubectl-compatible K3s API with hard CPU, memory, and GPU quotas, persistent storage, and
+        automatically published kubeconfigs.
       </p>
 
       <Callout variant="warning" title="Pre-release software">
