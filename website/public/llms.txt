@@ -1,0 +1,33 @@
+# KubeCell
+
+> KubeCell gives every developer their own isolated Kubernetes cluster (VirtualCluster) on shared physical hosts. A single management cluster holds desired state; each Cell host runs the workloads. Developers get a standard kubectl-compatible K3s API with hard CPU/memory/GPU quotas, persistent storage, and kubeconfigs published automatically.
+
+Status: pre-release (kubecell.io/v1alpha1). Not production ready.
+
+## Key facts
+
+- Four public CRDs under kubecell.io/v1alpha1: Cell, VirtualNodeClass, VirtualClusterPlan, VirtualCluster.
+- Manifests stay small: you choose a host and a quota tier; versions, ports, and security defaults are handled for you.
+- The management controller writes OCM ManifestWork objects and reads hosts only through the OCM cluster proxy.
+- Each child cluster has exactly one logical node named `kubelet`; scale by switching quota tiers, not by adding nodes.
+- Isolation: per-child host namespace with ResourceQuota, LimitRange, NetworkPolicy, and admission rejection of privileged/host access and hostPath volumes.
+- Pinned stack: host K3s v1.36.3+k3s1, K3k v1.2.0, child K3s v1.34.2+k3s1, OCM Hub v1.3.1, TopoLVM on hosts.
+- Built on upstream components (K3s, K3k, TopoLVM, OCM) through their public APIs; no custom scheduler, CNI, CSI, or device allocator.
+
+## Docs
+
+- [Overview](/docs/): what KubeCell is and is not, mental model, design principles.
+- [Core concepts](/docs/concepts/): Cell, VirtualNodeClass, VirtualClusterPlan, VirtualCluster, logical node, reflected Pods, resolution snapshot.
+- [Installation](/docs/installation/): prerequisites, management plane, OCM Hub, host onboarding order.
+- [First VirtualCluster](/docs/first-virtualcluster/): Plan preflight, creation, kubeconfig, verification.
+- [Host onboarding](/docs/host-onboarding/): four-command flow (doctor, join, accept, chart).
+- [Day-2 operations](/docs/operations/): health checks, quota changes, credentials, ingress, storage, upgrades.
+- [API reference](/docs/api-reference/): every CRD field, phase, and condition.
+- [Security and isolation](/docs/security/): enforcement layers and trust model.
+- [Troubleshooting](/docs/troubleshooting/): symptom-first diagnosis.
+- [FAQ](/docs/faq/): short answers about scope and trade-offs.
+
+## Source
+
+- Repository: https://github.com/taosher/KubeCell
+- Authoritative design: https://github.com/taosher/KubeCell/blob/main/technical-design.md

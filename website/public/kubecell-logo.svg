@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 430" width="400" height="430" role="img" aria-label="KubeCell logo">
+  <!-- Transparent background, no watermark -->
+  <g id="cubes" fill="#1E6FD5">
+    <!-- Top cube: flatter, wider top face -->
+    <g id="cube-top">
+      <polygon points="200,10 246,32 200,54 154,32"/>
+      <polygon points="154,40 195,61 195,106 154,85"/>
+      <polygon points="246,40 205,61 205,106 246,85"/>
+    </g>
+    <!-- Bottom-left cube -->
+    <g id="cube-left">
+      <polygon points="92,192 138,214 92,236 46,214"/>
+      <polygon points="46,222 87,243 87,288 46,267"/>
+      <polygon points="138,222 97,243 97,288 138,267"/>
+    </g>
+    <!-- Bottom-right cube -->
+    <g id="cube-right">
+      <polygon points="308,192 354,214 308,236 262,214"/>
+      <polygon points="262,222 303,243 303,288 262,267"/>
+      <polygon points="354,222 313,243 313,288 354,267"/>
+    </g>
+  </g>
+
+  <!-- Outer dark broken hexagonal frame -->
+  <g id="outer-frame" fill="none" stroke="#0E2C5B" stroke-width="23" stroke-linejoin="miter" stroke-linecap="butt">
+    <path d="M 170,102 L 110,137 L 110,206"/>
+    <path d="M 230,102 L 290,137 L 290,206"/>
+    <path d="M 138,255 L 200,291 L 262,255"/>
+  </g>
+
+  <!-- Center hexagon -->
+  <g id="center-hex">
+    <polygon points="200,126 255,158 255,222 200,254 145,222 145,158" fill="#1E6FD5"/>
+  </g>
+
+  <!-- Center helm -->
+  <g id="wheel" transform="translate(200,190)">
+    <g stroke="#FFFFFF" stroke-width="4.5" stroke-linecap="round">
+      <line x1="0" y1="0" x2="0" y2="-35"/>
+      <line x1="0" y1="0" x2="24.7" y2="-24.7"/>
+      <line x1="0" y1="0" x2="35" y2="0"/>
+      <line x1="0" y1="0" x2="24.7" y2="24.7"/>
+      <line x1="0" y1="0" x2="0" y2="35"/>
+      <line x1="0" y1="0" x2="-24.7" y2="24.7"/>
+      <line x1="0" y1="0" x2="-35" y2="0"/>
+      <line x1="0" y1="0" x2="-24.7" y2="-24.7"/>
+    </g>
+    <circle cx="0" cy="0" r="28" fill="none" stroke="#FFFFFF" stroke-width="5.5"/>
+    <circle cx="0" cy="0" r="7.5" fill="#FFFFFF"/>
+    <circle cx="0" cy="0" r="3.5" fill="#1E6FD5"/>
+  </g>
+
+  <text x="200" y="380" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="66" letter-spacing="-1" fill="#0E2C5B">KubeCell</text>
+</svg>

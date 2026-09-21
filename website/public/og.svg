@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#070d1b"/>
+      <stop offset="0.55" stop-color="#04060d"/>
+      <stop offset="1" stop-color="#060b18"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.18" cy="0.12" r="0.75">
+      <stop offset="0" stop-color="#2f7fe0" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#2f7fe0" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glow2" cx="0.92" cy="0.9" r="0.6">
+      <stop offset="0" stop-color="#8b5cf6" stop-opacity="0.25"/>
+      <stop offset="1" stop-color="#8b5cf6" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="grid" width="48" height="48" patternUnits="userSpaceOnUse">
+      <path d="M 48 0 L 0 0 0 48" fill="none" stroke="#94a3b8" stroke-opacity="0.07" stroke-width="1"/>
+    </pattern>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#7fb6ff"/>
+      <stop offset="1" stop-color="#38bdf8"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect width="1200" height="630" fill="url(#grid)"/>
+  <rect width="1200" height="630" fill="url(#glow)"/>
+  <rect width="1200" height="630" fill="url(#glow2)"/>
+
+  <g transform="translate(80 74) scale(0.24) translate(-200 -215)">
+    <g fill="#2f7fe0">
+      <polygon points="200,10 246,32 200,54 154,32"/>
+      <polygon points="154,40 195,61 195,106 154,85"/>
+      <polygon points="246,40 205,61 205,106 246,85"/>
+      <polygon points="92,192 138,214 92,236 46,214"/>
+      <polygon points="46,222 87,243 87,288 46,267"/>
+      <polygon points="138,222 97,243 97,288 138,267"/>
+      <polygon points="308,192 354,214 308,236 262,214"/>
+      <polygon points="262,222 303,243 303,288 262,267"/>
+      <polygon points="354,222 313,243 313,288 354,267"/>
+    </g>
+    <g fill="none" stroke="#3d7fbf" stroke-width="23" stroke-linejoin="miter" stroke-linecap="butt">
+      <path d="M 170,102 L 110,137 L 110,206"/>
+      <path d="M 230,102 L 290,137 L 290,206"/>
+      <path d="M 138,255 L 200,291 L 262,255"/>
+    </g>
+    <g>
+      <polygon points="200,126 255,158 255,222 200,254 145,222 145,158" fill="#2f7fe0"/>
+      <g stroke="#FFFFFF" stroke-width="4.5" stroke-linecap="round" transform="translate(200,190)">
+        <line x1="0" y1="0" x2="0" y2="-35"/>
+        <line x1="0" y1="0" x2="24.7" y2="-24.7"/>
+        <line x1="0" y1="0" x2="35" y2="0"/>
+        <line x1="0" y1="0" x2="24.7" y2="24.7"/>
+        <line x1="0" y1="0" x2="0" y2="35"/>
+        <line x1="0" y1="0" x2="-24.7" y2="24.7"/>
+        <line x1="0" y1="0" x2="-35" y2="0"/>
+        <line x1="0" y1="0" x2="-24.7" y2="-24.7"/>
+      </g>
+      <circle cx="200" cy="190" r="28" fill="none" stroke="#FFFFFF" stroke-width="5.5"/>
+      <circle cx="200" cy="190" r="7.5" fill="#FFFFFF"/>
+      <circle cx="200" cy="190" r="3.5" fill="#2f7fe0"/>
+    </g>
+  </g>
+
+  <text x="152" y="122" font-family="Helvetica, Arial, sans-serif" font-size="44" font-weight="bold" fill="#e8eefb">KubeCell</text>
+
+  <text x="80" y="270" font-family="Helvetica, Arial, sans-serif" font-size="64" font-weight="bold" fill="#e8eefb">Isolated Kubernetes child clusters</text>
+  <text x="80" y="350" font-family="Helvetica, Arial, sans-serif" font-size="64" font-weight="bold" fill="#e8eefb">on shared bare metal</text>
+
+  <rect x="80" y="396" width="72" height="6" rx="3" fill="url(#accent)"/>
+
+  <text x="80" y="452" font-family="Helvetica, Arial, sans-serif" font-size="27" fill="#93a4c3">One management cluster declares intent. Every Cell host runs the workloads.</text>
+  <text x="80" y="494" font-family="Helvetica, Arial, sans-serif" font-size="27" fill="#93a4c3">Hard quota isolation, TopoLVM storage, unified accelerators. No forks.</text>
+
+  <text x="80" y="566" font-family="Courier, monospace" font-size="21" fill="#7fb6ff">kubecell.io/v1alpha1   ·   K3s   ·   K3k   ·   OCM   ·   TopoLVM   ·   Traefik</text>
+</svg>

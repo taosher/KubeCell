@@ -1,0 +1,15 @@
+node_modules
+.env*
+.next
+next-env.d.ts
+/dist/
+.vinext/
+.wrangler/
+
+# Generated SEO metadata files (see scripts/generate-seo.ts)
+/app/sitemap.xml
+/app/robots.txt
+/app/manifest.webmanifest
+
+# TypeScript incremental build info
+*.tsbuildinfo
