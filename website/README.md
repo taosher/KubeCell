@@ -47,8 +47,23 @@ Authentication uses `wrangler login` locally or `CLOUDFLARE_API_TOKEN` plus
 
 ### GitHub Actions
 
-`.github/workflows/website.yml` builds the site and deploys it on every push to `main` that touches
-`website/**`. Configure these repository secrets:
+`.github/workflows/website.yml` builds the site for every push and pull request that touches
+`website/**`. Deployments behave like this:
+
+| Trigger | Result |
+| --- | --- |
+| Push to `main` | Production deployment (`--branch=main`) |
+| Manual run (`workflow_dispatch`) on any branch | Preview deployment for that branch |
+| Pull request | Build and verify only; no secrets are used |
+
+The deploy job runs Wrangler directly (`pnpm exec wrangler pages deploy`) instead of a wrapper
+action, verifies the token by listing Pages projects, and creates the `kubecell` project when it
+does not exist yet. Failures show the real Wrangler error in the job log.
+
+If the deploy job is skipped, check the event that started the run: pull requests never deploy, and
+manual runs on a branch other than `main` produce a preview URL instead of updating production.
+
+Configure these repository secrets:
 
 | Secret | Purpose |
 | --- | --- |
