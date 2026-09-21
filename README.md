@@ -158,6 +158,23 @@ The `kubecell-management` chart bundles the kite-org dashboard as a conditional 
 
 Delete the owning `VirtualCluster` to remove a child cluster (Finalizer-scoped cleanup by UID; under `Retain`, PVs become Released and data is preserved). Uninstalling a Helm release is not the same as uninstalling OCM.
 
+## Website
+
+The public landing page and documentation site live in `website/`. It is an English, statically
+exported [vinext](https://github.com/cloudflare/vinext) app built with shadcn/ui and Magic UI, and
+deployed to Cloudflare Pages with Wrangler.
+
+```sh
+cd website
+pnpm install
+pnpm dev        # http://localhost:3001
+pnpm build      # static export to dist/client
+pnpm deploy     # wrangler pages deploy (project: kubecell)
+```
+
+`.github/workflows/website.yml` typechecks, builds, and deploys the site on pushes to `main` that
+touch `website/**`. See `website/README.md` for Cloudflare secrets and content conventions.
+
 ## Documentation Map
 
 - `technical-design.md`: authoritative behavior, APIs, dependencies, and operational assumptions.
@@ -166,6 +183,7 @@ Delete the owning `VirtualCluster` to remove a child cluster (Finalizer-scoped c
 - `docs/testing/ci-plan.md`: CI layers and the full reinstall loop.
 - `docs/environment.example.md`: template for local lab notes (`docs/environment.md` itself is gitignored).
 - `hack/release/README.md`: release-bundle workflow.
+- `website/README.md`: public website structure, SEO setup, and Pages deployment.
 
 ## Project Layout
 
@@ -179,5 +197,6 @@ third-party/          pinned upstream versions (e.g. OCM)
 hack/                 image and release helpers
 test/                 envtest, chart contracts, manifest guards, e2e scaffolding
 docs/                 operations and testing guides plus the logo
+website/              public landing page and documentation site (Cloudflare Pages)
 technical-design.md   single source of truth
 ```
