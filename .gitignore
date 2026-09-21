@@ -16,7 +16,9 @@ bug-track.md
 
 # Local operator artifacts and credentials (never committed)
 *.kubeconfig
-kubeconfig*
+kubeconfig
+kubeconfig.yaml
+kubeconfig.yml
 *.key
 *.pem
 .env
