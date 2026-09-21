@@ -116,4 +116,6 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: website
-          command: pages deploy --cwd deploy --branch=main
+          # Cloudflare Pages treats the production branch (main) as production
+          # and every other branch name as a preview deployment.
+          command: pages deploy --cwd deploy --branch=${{ github.ref_name }}
