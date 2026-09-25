@@ -4,6 +4,8 @@
 
 # KubeCell
 
+[![OpenRepos](https://img.shields.io/endpoint?url=https://openrepos.org/status/kubecell.openrepos.org.json&style=flat-square)](https://kubecell.openrepos.org/)
+
 Provision isolated Kubernetes child clusters (`VirtualCluster`) on shared physical hosts.
 
 KubeCell is a Kubernetes Operator built with Kubebuilder. A single management cluster holds the desired state; each Cell host cluster runs the workloads. Developers get a standard `kubectl`-compatible child K3s API with hard quota isolation, TopoLVM storage, and unified accelerator semantics.
