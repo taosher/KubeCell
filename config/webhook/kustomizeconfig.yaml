@@ -1,0 +1,13 @@
+# This file teaches kustomize that Certificate.spec.issuerRef.name is a
+# reference to an Issuer, so that namePrefix/nameSuffix transformations are
+# also applied to the reference. Without this, the Issuer gets renamed to
+# <prefix>-selfsigned-issuer while the Certificate still points to the
+# unprefixed name, causing cert-manager to report "Referenced Issuer not
+# found" and the webhook secret to never be issued.
+nameReference:
+- kind: Issuer
+  group: cert-manager.io
+  fieldSpecs:
+  - path: spec/issuerRef/name
+    kind: Certificate
+    group: cert-manager.io

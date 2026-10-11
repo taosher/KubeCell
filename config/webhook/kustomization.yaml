@@ -5,5 +5,8 @@ resources:
   - service.yaml
   - certificate.yaml
 
+configurations:
+  - kustomizeconfig.yaml
+
 patches:
   - path: ca-injection-patch.yaml
