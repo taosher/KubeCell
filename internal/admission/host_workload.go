@@ -428,23 +428,3 @@ func hasRequirement(term corev1.NodeSelectorTerm, key, value string) bool {
 	}
 	return false
 }
-
-func nodeSelectorEqual(left, right *corev1.NodeSelector) bool {
-	if left == nil || right == nil {
-		return left == right
-	}
-	if len(left.NodeSelectorTerms) != len(right.NodeSelectorTerms) {
-		return false
-	}
-	for index := range left.NodeSelectorTerms {
-		if len(left.NodeSelectorTerms[index].MatchExpressions) != len(right.NodeSelectorTerms[index].MatchExpressions) {
-			return false
-		}
-		for expressionIndex := range left.NodeSelectorTerms[index].MatchExpressions {
-			if left.NodeSelectorTerms[index].MatchExpressions[expressionIndex].Key != right.NodeSelectorTerms[index].MatchExpressions[expressionIndex].Key || left.NodeSelectorTerms[index].MatchExpressions[expressionIndex].Operator != right.NodeSelectorTerms[index].MatchExpressions[expressionIndex].Operator || len(left.NodeSelectorTerms[index].MatchExpressions[expressionIndex].Values) != len(right.NodeSelectorTerms[index].MatchExpressions[expressionIndex].Values) {
-				return false
-			}
-		}
-	}
-	return true
-}

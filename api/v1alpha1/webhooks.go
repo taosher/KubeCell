@@ -17,7 +17,7 @@ func (r *VirtualCluster) Default() {}
 func (r *VirtualCluster) ValidateCreate() error {
 	errors := ValidateVirtualClusterSpec(r.Spec)
 	if r.Namespace != "" && r.Namespace != ManagementNamespace {
-		errors = append(errors, fmt.Errorf("VirtualCluster must be created in namespace %q", ManagementNamespace))
+		errors = append(errors, fmt.Errorf("virtualCluster must be created in namespace %q", ManagementNamespace))
 	}
 	return validationError("VirtualCluster", errors)
 }
@@ -39,7 +39,7 @@ func (r *VirtualClusterPlan) Default() {}
 func (r *VirtualClusterPlan) ValidateCreate() error {
 	errors := ValidateVirtualClusterSpec(r.Spec.VirtualCluster)
 	if r.Namespace != "" && r.Namespace != ManagementNamespace {
-		errors = append(errors, fmt.Errorf("VirtualClusterPlan must be created in namespace %q", ManagementNamespace))
+		errors = append(errors, fmt.Errorf("virtualClusterPlan must be created in namespace %q", ManagementNamespace))
 	}
 	return validationError("VirtualClusterPlan", errors)
 }
@@ -61,7 +61,7 @@ func (r *Cell) Default() {}
 func (r *Cell) ValidateCreate() error {
 	errors := ValidateCellSpec(r.Spec)
 	if r.Namespace != "" && r.Namespace != ManagementNamespace {
-		errors = append(errors, fmt.Errorf("Cell must be created in namespace %q", ManagementNamespace))
+		errors = append(errors, fmt.Errorf("cell must be created in namespace %q", ManagementNamespace))
 	}
 	return validationError("Cell", errors)
 }
@@ -110,7 +110,7 @@ func (r *VirtualNodeClass) ValidateUpdate(old runtime.Object, referenced bool) e
 		return validationError("VirtualNodeClass", errors)
 	}
 	if !apiequality.Semantic.DeepEqual(previous.Spec, r.Spec) {
-		errors = append(errors, fmt.Errorf("VirtualNodeClass spec is immutable while referenced by a VirtualCluster"))
+		errors = append(errors, fmt.Errorf("virtualNodeClass spec is immutable while referenced by a VirtualCluster"))
 	}
 	return validationError("VirtualNodeClass", errors)
 }

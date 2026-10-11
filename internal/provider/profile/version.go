@@ -19,7 +19,7 @@ var supportedChildVersions = map[string]ChildVersion{
 func ResolveChildVersion(canonical string) (ChildVersion, error) {
 	resolved, ok := supportedChildVersions[canonical]
 	if !ok {
-		return ChildVersion{}, fmt.Errorf("Child K3s version %q is not certified for the selected K3k provider", canonical)
+		return ChildVersion{}, fmt.Errorf("child K3s version %q is not certified for the selected K3k provider", canonical)
 	}
 	return resolved, nil
 }

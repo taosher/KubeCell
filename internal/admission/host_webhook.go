@@ -32,7 +32,7 @@ type HostWorkloadWebhook struct {
 
 func RegisterHostWorkloadWebhook(server webhook.Server, kubeClient client.Client, scheme *runtime.Scheme) error {
 	if server == nil || kubeClient == nil || scheme == nil {
-		return fmt.Errorf("Host workload webhook requires server, client, and scheme")
+		return fmt.Errorf("host workload webhook requires server, client, and scheme")
 	}
 	server.Register("/mutate-v1-pod", &webhook.Admission{Handler: &HostWorkloadWebhook{
 		Client:  kubeClient,
@@ -43,7 +43,7 @@ func RegisterHostWorkloadWebhook(server webhook.Server, kubeClient client.Client
 
 func (h *HostWorkloadWebhook) Handle(ctx context.Context, request admission.Request) admission.Response {
 	if h.Client == nil || h.Decoder == nil {
-		return admission.Errored(500, fmt.Errorf("Host workload webhook is not configured"))
+		return admission.Errored(500, fmt.Errorf("host workload webhook is not configured"))
 	}
 	pod := &corev1.Pod{}
 	if err := h.Decoder.Decode(request, pod); err != nil {
@@ -137,7 +137,7 @@ func (h *HostWorkloadWebhook) resolveStorageNodes(ctx context.Context, namespace
 	if len(policy.StorageClassNames) == 0 {
 		for _, volume := range pod.Spec.Volumes {
 			if volume.PersistentVolumeClaim != nil {
-				return nil, fmt.Errorf("PVC %s has no resolved StorageClass mapping", volume.PersistentVolumeClaim.ClaimName)
+				return nil, fmt.Errorf("pvc %s has no resolved StorageClass mapping", volume.PersistentVolumeClaim.ClaimName)
 			}
 		}
 		return nil, nil
@@ -150,12 +150,12 @@ func (h *HostWorkloadWebhook) resolveStorageNodes(ctx context.Context, namespace
 		claim := &corev1.PersistentVolumeClaim{}
 		if err := h.Client.Get(ctx, types.NamespacedName{Namespace: namespace, Name: volume.PersistentVolumeClaim.ClaimName}, claim); err != nil {
 			if apierrors.IsNotFound(err) {
-				return nil, fmt.Errorf("PVC %s/%s is not visible to Host admission", namespace, volume.PersistentVolumeClaim.ClaimName)
+				return nil, fmt.Errorf("pvc %s/%s is not visible to Host admission", namespace, volume.PersistentVolumeClaim.ClaimName)
 			}
 			return nil, fmt.Errorf("read PVC %s/%s: %w", namespace, volume.PersistentVolumeClaim.ClaimName, err)
 		}
 		if claim.Spec.StorageClassName == nil || !containsString(policy.StorageClassNames, *claim.Spec.StorageClassName) {
-			return nil, fmt.Errorf("PVC %s/%s does not use an approved StorageClass", namespace, claim.Name)
+			return nil, fmt.Errorf("pvc %s/%s does not use an approved StorageClass", namespace, claim.Name)
 		}
 		if claim.Spec.VolumeName == "" {
 			continue
@@ -163,7 +163,7 @@ func (h *HostWorkloadWebhook) resolveStorageNodes(ctx context.Context, namespace
 		pv := &corev1.PersistentVolume{}
 		if err := h.Client.Get(ctx, types.NamespacedName{Name: claim.Spec.VolumeName}, pv); err != nil {
 			if apierrors.IsNotFound(err) {
-				return nil, fmt.Errorf("PV %s for PVC %s/%s is not visible to Host admission", claim.Spec.VolumeName, namespace, claim.Name)
+				return nil, fmt.Errorf("pv %s for PVC %s/%s is not visible to Host admission", claim.Spec.VolumeName, namespace, claim.Name)
 			}
 			return nil, fmt.Errorf("read PV %s: %w", claim.Spec.VolumeName, err)
 		}

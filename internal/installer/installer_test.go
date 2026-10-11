@@ -14,6 +14,11 @@ import (
 	"github.com/kubecell/kubecell/internal/platform"
 )
 
+const (
+	testKubectlProgram = "kubectl"
+	testCellName       = "cell1"
+)
+
 func TestValidateCompatibilityRequiresPinnedOCMAndSharedModeVersions(t *testing.T) {
 	manifest := CompatibilityManifest{
 		KubecellVersion: "0.1.0",
@@ -55,13 +60,13 @@ func TestManagementInstallCommandsApplyKubeCellCRDsBeforeController(t *testing.T
 	if len(commands) < 4 {
 		t.Fatalf("commands = %v, want CRD, OCM, and Controller commands", commands)
 	}
-	if commands[0].Program != "kubectl" || !containsArg(commands[0].Args, "config/crd") {
+	if commands[0].Program != testKubectlProgram || !containsArg(commands[0].Args, "config/crd") {
 		t.Fatalf("first command = %#v, want explicit KubeCell CRD apply", commands[0])
 	}
-	if commands[1].Program != "kubectl" || !containsArg(commands[1].Args, "--for=condition=Established") || !containsArg(commands[1].Args, "config/crd") {
+	if commands[1].Program != testKubectlProgram || !containsArg(commands[1].Args, "--for=condition=Established") || !containsArg(commands[1].Args, "config/crd") {
 		t.Fatalf("second command = %#v, want CRD Established wait", commands[1])
 	}
-	if commands[2].Program != "kubectl" || !containsArg(commands[2].Args, "ocm/bundle.yaml") {
+	if commands[2].Program != testKubectlProgram || !containsArg(commands[2].Args, "ocm/bundle.yaml") {
 		t.Fatalf("third command = %#v, want OCM apply", commands[2])
 	}
 }
@@ -211,7 +216,7 @@ func TestLifecycleCommandsNeverRemoveOCM(t *testing.T) {
 }
 
 func commandText(commands []Command) string {
-	var lines []string
+	lines := make([]string, 0, len(commands))
 	for _, command := range commands {
 		lines = append(lines, command.Program+" "+strings.Join(command.Args, " "))
 	}
@@ -219,7 +224,7 @@ func commandText(commands []Command) string {
 }
 
 func doctorCheckText(checks []DoctorCheck) string {
-	var lines []string
+	lines := make([]string, 0, len(checks))
 	for _, check := range checks {
 		lines = append(lines, "["+check.ID+"] "+check.Command.Program+" "+strings.Join(check.Command.Args, " "))
 	}
@@ -446,7 +451,7 @@ func TestLoadReleaseBundleVerifiesOptionalBaselineArtifacts(t *testing.T) {
 }
 
 func TestRenderCellYAMLProducesApplyReadyCell(t *testing.T) {
-	rendered, err := RenderCellYAML(CellDraft{Name: "cell1", ProfileName: "ascend-910b", Devices: []api.DeviceContract{{Name: "Ascend910", ResourceName: "huawei.com/Ascend910"}}})
+	rendered, err := RenderCellYAML(CellDraft{Name: testCellName, ProfileName: "ascend-910b", Devices: []api.DeviceContract{{Name: "Ascend910", ResourceName: "huawei.com/Ascend910"}}})
 	if err != nil {
 		t.Fatalf("RenderCellYAML() error = %v", err)
 	}
@@ -454,10 +459,10 @@ func TestRenderCellYAMLProducesApplyReadyCell(t *testing.T) {
 	if err := yaml.Unmarshal([]byte(rendered), cell); err != nil {
 		t.Fatalf("unmarshal rendered Cell: %v", err)
 	}
-	if cell.Kind != "Cell" || cell.Name != "cell1" {
+	if cell.Kind != "Cell" || cell.Name != testCellName {
 		t.Fatalf("rendered identity = %s/%s, want Cell/cell1", cell.Kind, cell.Name)
 	}
-	if cell.Spec.ManagedClusterRef.Name != "cell1" {
+	if cell.Spec.ManagedClusterRef.Name != testCellName {
 		t.Fatalf("managedClusterRef = %q, want cell1", cell.Spec.ManagedClusterRef.Name)
 	}
 	if cell.Spec.MachineProfile.Name != "ascend-910b" || len(cell.Spec.MachineProfile.Devices) != 1 {
@@ -469,7 +474,7 @@ func TestRenderCellYAMLRejectsEmptyNameOrProfile(t *testing.T) {
 	if _, err := RenderCellYAML(CellDraft{ProfileName: "ascend-910b"}); err == nil {
 		t.Fatal("empty cell name was accepted")
 	}
-	if _, err := RenderCellYAML(CellDraft{Name: "cell1"}); err == nil {
+	if _, err := RenderCellYAML(CellDraft{Name: testCellName}); err == nil {
 		t.Fatal("empty profile name was accepted")
 	}
 }
@@ -504,7 +509,7 @@ func TestDiscoverCellDraftEnforcesSingleProfile(t *testing.T) {
 
 func TestSuggestClassYAMLDerivesPairedDeviceQuota(t *testing.T) {
 	cell := &api.Cell{}
-	cell.Name = "cell1"
+	cell.Name = testCellName
 	cell.Status.Inventory = map[string]api.InventoryStatus{
 		"cpu":                  {Allocatable: resource.MustParse("16")},
 		"memory":               {Allocatable: resource.MustParse("32Gi")},

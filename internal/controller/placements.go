@@ -28,6 +28,9 @@ type VirtualNodeHostReaderFactory interface {
 	ForCell(context.Context, *api.Cell) (VirtualNodeHostReader, error)
 }
 
+// failureLayerHostSchedulingBlocked marks pods stuck in Pending on the host.
+const failureLayerHostSchedulingBlocked = "HostSchedulingBlocked"
+
 func projectPlacements(ctx context.Context, reader VirtualNodeHostReader, namespace, k3kClusterName string, pods []corev1.Pod) []api.WorkloadPlacement {
 	placements := make([]api.WorkloadPlacement, 0, len(pods))
 	for _, pod := range pods {
@@ -40,7 +43,7 @@ func projectPlacements(ctx context.Context, reader VirtualNodeHostReader, namesp
 		}
 		failureLayer := ""
 		if pod.Status.Phase == corev1.PodPending {
-			failureLayer = "HostSchedulingBlocked"
+			failureLayer = failureLayerHostSchedulingBlocked
 		}
 		placement := api.WorkloadPlacement{ChildUID: pod.Annotations["kubecell.io/child-uid"], HostUID: string(pod.UID), Phase: phase, HostNode: pod.Spec.NodeName, Requests: helpers.EffectivePodRequests(&pod), FailureLayer: failureLayer, ObservedAt: metav1.Now()}
 		for _, volume := range pod.Spec.Volumes {
@@ -49,7 +52,7 @@ func projectPlacements(ctx context.Context, reader VirtualNodeHostReader, namesp
 			}
 			claim, err := reader.GetPersistentVolumeClaim(ctx, namespace, volume.PersistentVolumeClaim.ClaimName)
 			if err != nil || claim == nil || claim.Spec.VolumeName == "" {
-				if failureLayer == "HostSchedulingBlocked" {
+				if failureLayer == failureLayerHostSchedulingBlocked {
 					placement.FailureLayer = "StorageProvisioningBlocked"
 				}
 				continue

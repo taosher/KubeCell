@@ -1,8 +1,10 @@
 package controller
 
-import "fmt"
+import (
+	"fmt"
 
-import workv1 "open-cluster-management.io/api/work/v1"
+	workv1 "open-cluster-management.io/api/work/v1"
+)
 
 type DeletionStep struct{ Name string }
 type DeletionPlan struct {
@@ -29,13 +31,13 @@ func BuildDeletionPlan(instance, foundation *workv1.ManifestWork, expectedUID st
 
 func ValidateWorkReference(work *workv1.ManifestWork, expectedClusterUID, expectedWorkUID string) error {
 	if work == nil {
-		return fmt.Errorf("Work is nil")
+		return fmt.Errorf("work is nil")
 	}
 	if work.Labels["kubecell.io/virtual-cluster-uid"] != expectedClusterUID {
-		return fmt.Errorf("Work %s/%s has foreign VirtualCluster UID", work.Namespace, work.Name)
+		return fmt.Errorf("work %s/%s has foreign VirtualCluster UID", work.Namespace, work.Name)
 	}
 	if expectedWorkUID != "" && string(work.UID) != expectedWorkUID {
-		return fmt.Errorf("Work %s/%s UID changed from %q to %q", work.Namespace, work.Name, expectedWorkUID, work.UID)
+		return fmt.Errorf("work %s/%s UID changed from %q to %q", work.Namespace, work.Name, expectedWorkUID, work.UID)
 	}
 	return nil
 }

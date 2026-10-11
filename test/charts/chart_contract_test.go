@@ -12,6 +12,13 @@ import (
 	"k8s.io/apimachinery/pkg/util/yaml"
 )
 
+const (
+	testKindDeployment         = "Deployment"
+	testKindClusterRoleBinding = "ClusterRoleBinding"
+	testControllerName         = "kubecell-controller"
+	testWebhookName            = "kubecell-host-webhook"
+)
+
 func TestManagementChartRendersCompleteManagementContract(t *testing.T) {
 	objects := renderChart(t, "charts/kubecell-management")
 	required := map[string]bool{
@@ -39,7 +46,7 @@ func TestManagementChartRendersCompleteManagementContract(t *testing.T) {
 func TestManagementChartAllowsSecretCacheObservation(t *testing.T) {
 	objects := renderChart(t, "charts/kubecell-management")
 	for _, verb := range []string{"list", "watch"} {
-		if !containsRuleForRole(objects, "kubecell-controller", "", "secrets", verb) {
+		if !containsRuleForRole(objects, testControllerName, "", "secrets", verb) {
 			t.Fatalf("management chart controller RBAC does not allow Secret %s for cache observation", verb)
 		}
 	}
@@ -50,7 +57,7 @@ func TestHostChartRendersOnlyHostWebhookContract(t *testing.T) {
 	seenDeployment := false
 	seenWebhook := false
 	for _, object := range objects {
-		if object.GetKind() == "Deployment" && object.GetName() == "kubecell-host-webhook" {
+		if object.GetKind() == testKindDeployment && object.GetName() == testWebhookName {
 			seenDeployment = true
 		}
 		if object.GetKind() == "MutatingWebhookConfiguration" && object.GetName() == "kubecell-host-mutating-webhook" {
@@ -83,10 +90,10 @@ func TestHostChartSupportsOCMManagedNamespaceAndRBAC(t *testing.T) {
 		if object.GetKind() == "Namespace" {
 			t.Fatalf("OCM-managed host chart must not render Namespace %s", object.GetName())
 		}
-		if object.GetKind() == "ClusterRole" && object.GetName() != "kubecell-host-webhook" {
+		if object.GetKind() == "ClusterRole" && object.GetName() != testWebhookName {
 			t.Fatalf("OCM-managed host chart must not render external ClusterRole %s", object.GetName())
 		}
-		if object.GetKind() == "ClusterRoleBinding" && object.GetName() != "kubecell-host-webhook" {
+		if object.GetKind() == testKindClusterRoleBinding && object.GetName() != testWebhookName {
 			t.Fatalf("OCM-managed host chart must not render cluster RBAC %s/%s", object.GetKind(), object.GetName())
 		}
 	}
@@ -98,8 +105,8 @@ func TestHostChartGrantsWebhookReadAccessWhenOCMRBACIsExternal(t *testing.T) {
 		"--set", "rbac.managedServiceAccountBindingCreate=false",
 		"--set", "rbac.foundationApplierCreate=false")
 	for _, resource := range []string{"namespaces", "persistentvolumes", "persistentvolumeclaims"} {
-		if !containsRuleForRole(objects, "kubecell-host-webhook", "", resource, "list") ||
-			!containsRuleForRole(objects, "kubecell-host-webhook", "", resource, "watch") {
+		if !containsRuleForRole(objects, testWebhookName, "", resource, "list") ||
+			!containsRuleForRole(objects, testWebhookName, "", resource, "watch") {
 			t.Errorf("host webhook RBAC does not allow list/watch on %s", resource)
 		}
 	}
@@ -108,7 +115,7 @@ func TestHostChartGrantsWebhookReadAccessWhenOCMRBACIsExternal(t *testing.T) {
 func TestHostChartBindsOCMManagedServiceAccount(t *testing.T) {
 	objects := renderChart(t, "charts/kubecell-host")
 	for _, object := range objects {
-		if object.GetKind() != "ClusterRoleBinding" || object.GetName() != "kubecell-managed-service-account-observer" {
+		if object.GetKind() != testKindClusterRoleBinding || object.GetName() != "kubecell-managed-service-account-observer" {
 			continue
 		}
 		subjects, found, err := unstructured.NestedSlice(object.Object, "subjects")
@@ -116,7 +123,9 @@ func TestHostChartBindsOCMManagedServiceAccount(t *testing.T) {
 			t.Fatalf("OCM observer subjects = %#v, error = %v", subjects, err)
 		}
 		subject := subjects[0].(map[string]interface{})
-		if subject["kind"] != "ServiceAccount" || subject["name"] != "kubecell-host-reader" || subject["namespace"] != "open-cluster-management-agent-addon" {
+		if subject["kind"] != "ServiceAccount" ||
+			subject["name"] != "kubecell-host-reader" ||
+			subject["namespace"] != "open-cluster-management-agent-addon" {
 			t.Fatalf("OCM observer subject = %#v", subject)
 		}
 		return
@@ -127,7 +136,7 @@ func TestHostChartBindsOCMManagedServiceAccount(t *testing.T) {
 func TestHostChartBindsOCMWorkAgentForFoundationResources(t *testing.T) {
 	objects := renderChart(t, "charts/kubecell-host")
 	for _, object := range objects {
-		if object.GetKind() != "ClusterRoleBinding" || object.GetName() != "kubecell-foundation-applier" {
+		if object.GetKind() != testKindClusterRoleBinding || object.GetName() != "kubecell-foundation-applier" {
 			continue
 		}
 		subjects, found, err := unstructured.NestedSlice(object.Object, "subjects")
@@ -135,7 +144,9 @@ func TestHostChartBindsOCMWorkAgentForFoundationResources(t *testing.T) {
 			t.Fatalf("foundation applier subjects = %#v, error = %v", subjects, err)
 		}
 		subject := subjects[0].(map[string]interface{})
-		if subject["kind"] != "ServiceAccount" || subject["name"] != "klusterlet-work-sa" || subject["namespace"] != "open-cluster-management-agent" {
+		if subject["kind"] != "ServiceAccount" ||
+			subject["name"] != "klusterlet-work-sa" ||
+			subject["namespace"] != "open-cluster-management-agent" {
 			t.Fatalf("foundation applier subject = %#v", subject)
 		}
 		return
@@ -179,7 +190,7 @@ func TestHostChartGrantsOCMWorkAgentFoundationAccess(t *testing.T) {
 func TestManagementChartInjectsOCMProxyConfiguration(t *testing.T) {
 	objects := renderChart(t, "charts/kubecell-management")
 	for _, object := range objects {
-		if object.GetKind() != "Deployment" || object.GetName() != "kubecell-controller" {
+		if object.GetKind() != testKindDeployment || object.GetName() != testControllerName {
 			continue
 		}
 		containers, found, err := unstructured.NestedSlice(object.Object, "spec", "template", "spec", "containers")
@@ -191,7 +202,14 @@ func TestManagementChartInjectsOCMProxyConfiguration(t *testing.T) {
 		if err != nil || !found {
 			t.Fatalf("controller env = %#v, error = %v", env, err)
 		}
-		for _, name := range []string{"KUBECELL_OCM_CLUSTER_PROXY_ADDRESS", "KUBECELL_OCM_CLUSTER_PROXY_CA_FILE", "KUBECELL_OCM_CLUSTER_PROXY_CLIENT_CERT_FILE", "KUBECELL_OCM_CLUSTER_PROXY_CLIENT_KEY_FILE", "KUBECELL_OCM_HOST_SERVER_NAME"} {
+		envNames := []string{
+			"KUBECELL_OCM_CLUSTER_PROXY_ADDRESS",
+			"KUBECELL_OCM_CLUSTER_PROXY_CA_FILE",
+			"KUBECELL_OCM_CLUSTER_PROXY_CLIENT_CERT_FILE",
+			"KUBECELL_OCM_CLUSTER_PROXY_CLIENT_KEY_FILE",
+			"KUBECELL_OCM_HOST_SERVER_NAME",
+		}
+		for _, name := range envNames {
 			if !envHasName(env, name) {
 				t.Errorf("controller env does not contain %s", name)
 			}
@@ -211,7 +229,7 @@ func TestManagementChartInjectsOCMProxyConfiguration(t *testing.T) {
 func TestManagementChartPassesWebhookToggleToController(t *testing.T) {
 	objects := renderChartWithArgs(t, "charts/kubecell-management", "--set", "webhook.enabled=false")
 	for _, object := range objects {
-		if object.GetKind() != "Deployment" || object.GetName() != "kubecell-controller" {
+		if object.GetKind() != testKindDeployment || object.GetName() != testControllerName {
 			continue
 		}
 		containers, found, err := unstructured.NestedSlice(object.Object, "spec", "template", "spec", "containers")
@@ -234,21 +252,24 @@ func TestManagementChartPassesWebhookToggleToController(t *testing.T) {
 func TestManagementChartSeparatesLeaderElectionLeaseAccess(t *testing.T) {
 	objects := renderChart(t, "charts/kubecell-management")
 	for _, verb := range []string{"get", "list", "watch"} {
-		if !containsRuleForRole(objects, "kubecell-controller", "coordination.k8s.io", "leases", verb) {
+		if !containsRuleForRole(objects, testControllerName, "coordination.k8s.io", "leases", verb) {
 			t.Fatalf("management controller ClusterRole must allow %s on OCM leases", verb)
 		}
 	}
-	if containsRuleForRole(objects, "kubecell-controller", "coordination.k8s.io", "leases", "update") ||
-		containsRuleForRole(objects, "kubecell-controller", "coordination.k8s.io", "leases", "patch") {
+	if containsRuleForRole(objects, testControllerName, "coordination.k8s.io", "leases", "update") ||
+		containsRuleForRole(objects, testControllerName, "coordination.k8s.io", "leases", "patch") {
 		t.Fatal("management controller ClusterRole must not mutate OCM leases")
 	}
 	for _, verb := range []string{"get", "list", "watch", "create", "update", "patch", "delete"} {
-		if !containsNamespacedRuleForRole(objects, "kubecell-controller-leader-election", "coordination.k8s.io", "leases", verb) {
+		if !containsNamespacedRuleForRole(objects, "kubecell-controller-leader-election",
+			"coordination.k8s.io", "leases", verb) {
 			t.Errorf("leader-election Role does not allow %s on coordination.k8s.io/leases", verb)
 		}
 	}
 	for _, object := range objects {
-		if object.GetKind() == "RoleBinding" && object.GetName() == "kubecell-controller-leader-election" && object.GetNamespace() == "kubecell-system" {
+		if object.GetKind() == "RoleBinding" &&
+			object.GetName() == "kubecell-controller-leader-election" &&
+			object.GetNamespace() == "kubecell-system" {
 			return
 		}
 	}
@@ -257,8 +278,8 @@ func TestManagementChartSeparatesLeaderElectionLeaseAccess(t *testing.T) {
 
 func TestManagementChartGrantsEventRecordingAccess(t *testing.T) {
 	objects := renderChart(t, "charts/kubecell-management")
-	if !containsRuleForRole(objects, "kubecell-controller", "", "events", "create") ||
-		!containsRuleForRole(objects, "kubecell-controller", "", "events", "patch") {
+	if !containsRuleForRole(objects, testControllerName, "", "events", "create") ||
+		!containsRuleForRole(objects, testControllerName, "", "events", "patch") {
 		t.Fatal("management controller RBAC must allow create and patch on Events")
 	}
 }
@@ -312,7 +333,8 @@ func containsRuleForRole(objects []*unstructured.Unstructured, roleName, apiGrou
 	return false
 }
 
-func containsNamespacedRuleForRole(objects []*unstructured.Unstructured, roleName, apiGroup, resource, verb string) bool {
+func containsNamespacedRuleForRole(objects []*unstructured.Unstructured, roleName, apiGroup,
+	resource, verb string) bool {
 	for _, object := range objects {
 		if object.GetKind() != "Role" || object.GetName() != roleName {
 			continue
@@ -395,7 +417,7 @@ func objectKey(object *unstructured.Unstructured) string {
 func TestManagementChartHardensControllerPod(t *testing.T) {
 	objects := renderChart(t, "charts/kubecell-management")
 	for _, object := range objects {
-		if object.GetKind() != "Deployment" || object.GetName() != "kubecell-controller" {
+		if object.GetKind() != testKindDeployment || object.GetName() != testControllerName {
 			continue
 		}
 		containers, found, err := unstructured.NestedSlice(object.Object, "spec", "template", "spec", "containers")

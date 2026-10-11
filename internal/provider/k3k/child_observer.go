@@ -30,6 +30,7 @@ type ChildClient interface {
 	EnsureStorageClass(context.Context, *storagev1.StorageClass) error
 	ListIngresses(context.Context) (*networkingv1.IngressList, error)
 	GetService(ctx context.Context, namespace, name string) (*corev1.Service, error)
+	// nolint:staticcheck // corev1.Endpoints deprecation requires migrating to discoveryv1.EndpointSlice; tracked separately.
 	GetEndpoints(ctx context.Context, namespace, name string) (*corev1.Endpoints, error)
 }
 
@@ -58,7 +59,7 @@ type ResourceObserver struct {
 
 func (o ResourceObserver) ObserveResources(ctx context.Context, cluster *api.VirtualCluster) (ResourceObservation, error) {
 	if o.Reader == nil {
-		return ResourceObservation{}, fmt.Errorf("Host reader is not configured")
+		return ResourceObservation{}, fmt.Errorf("host reader is not configured")
 	}
 	if cluster == nil || cluster.Status.Resolved.HostNamespace == "" || cluster.Status.Resolved.K3kClusterName == "" {
 		return ResourceObservation{}, fmt.Errorf("resolved Host namespace and K3k cluster name are required")
@@ -72,13 +73,13 @@ func (o ResourceObserver) ObserveResources(ctx context.Context, cluster *api.Vir
 	}
 	kubeconfig, found := secret.Data["kubeconfig.yaml"]
 	if !found || len(kubeconfig) == 0 {
-		return ResourceObservation{}, fmt.Errorf("Child kubeconfig Secret %s/%s has no kubeconfig.yaml", namespace, secretName)
+		return ResourceObservation{}, fmt.Errorf("child kubeconfig Secret %s/%s has no kubeconfig.yaml", namespace, secretName)
 	}
 	if uid := secret.Labels["kubecell.io/virtual-cluster-uid"]; uid != "" && uid != string(cluster.UID) {
-		return ResourceObservation{}, fmt.Errorf("Child kubeconfig Secret %s/%s belongs to VirtualCluster UID %q, want %q", namespace, secretName, uid, cluster.UID)
+		return ResourceObservation{}, fmt.Errorf("child kubeconfig Secret %s/%s belongs to VirtualCluster UID %q, want %q", namespace, secretName, uid, cluster.UID)
 	}
 	if secret.Labels["kubecell.io/virtual-cluster-uid"] == "" && !isOwnedByK3kCluster(secret, name) {
-		return ResourceObservation{}, fmt.Errorf("Child kubeconfig Secret %s/%s is not owned by K3k Cluster %q", namespace, secretName, name)
+		return ResourceObservation{}, fmt.Errorf("child kubeconfig Secret %s/%s is not owned by K3k Cluster %q", namespace, secretName, name)
 	}
 	serviceName := "k3k-" + name + "-service"
 	service, err := o.Reader.GetService(ctx, namespace, serviceName)
@@ -90,7 +91,7 @@ func (o ResourceObserver) ObserveResources(ctx context.Context, cluster *api.Vir
 			return ResourceObservation{Kubeconfig: append([]byte(nil), kubeconfig...), SourceSecretName: secretName, NodePort: port.NodePort}, nil
 		}
 	}
-	return ResourceObservation{}, fmt.Errorf("Child API Service %s/%s has no NodePort for port 443", namespace, serviceName)
+	return ResourceObservation{}, fmt.Errorf("child API Service %s/%s has no NodePort for port 443", namespace, serviceName)
 }
 
 func isOwnedByK3kCluster(secret *corev1.Secret, clusterName string) bool {
@@ -111,7 +112,7 @@ func (o ResourceObserver) Observe(ctx context.Context, cluster *api.VirtualClust
 		return ResourceObservation{}, err
 	}
 	if o.ClientFactory == nil {
-		return ResourceObservation{}, fmt.Errorf("Child client factory is not configured")
+		return ResourceObservation{}, fmt.Errorf("child client factory is not configured")
 	}
 	storageClass, err := render.RenderChildStorageClass(cluster.Status.Resolved.Storage.Class.ChildName)
 	if err != nil {
@@ -122,7 +123,7 @@ func (o ResourceObserver) Observe(ctx context.Context, cluster *api.VirtualClust
 		return ResourceObservation{}, fmt.Errorf("read Host TopoLVM StorageClass %q: %w", cluster.Status.Resolved.Storage.Class.HostName, err)
 	}
 	if hostStorageClass == nil || hostStorageClass.Provisioner != "topolvm.io" || hostStorageClass.VolumeBindingMode == nil || *hostStorageClass.VolumeBindingMode != storagev1.VolumeBindingWaitForFirstConsumer {
-		return ResourceObservation{}, fmt.Errorf("Host StorageClass %q is not a certified TopoLVM WaitForFirstConsumer class", cluster.Status.Resolved.Storage.Class.HostName)
+		return ResourceObservation{}, fmt.Errorf("host StorageClass %q is not a certified TopoLVM WaitForFirstConsumer class", cluster.Status.Resolved.Storage.Class.HostName)
 	}
 	if len(addresses) == 0 {
 		return ResourceObservation{}, fmt.Errorf("at least one Child API address is required")
@@ -166,7 +167,7 @@ func (o ResourceObserver) Observe(ctx context.Context, cluster *api.VirtualClust
 		observation.StorageClassReady = true
 		return observation, nil
 	}
-	return ResourceObservation{}, fmt.Errorf("Child API probe failed for all addresses: %w", lastErr)
+	return ResourceObservation{}, fmt.Errorf("child API probe failed for all addresses: %w", lastErr)
 }
 
 type KubernetesChildClientFactory struct{}
@@ -207,6 +208,7 @@ func (c KubernetesChildClient) GetService(ctx context.Context, namespace, name s
 	return c.clientset.CoreV1().Services(namespace).Get(ctx, name, metav1.GetOptions{})
 }
 
+// nolint:staticcheck // corev1.Endpoints deprecation requires migrating to discoveryv1.EndpointSlice; tracked separately.
 func (c KubernetesChildClient) GetEndpoints(ctx context.Context, namespace, name string) (*corev1.Endpoints, error) {
 	return c.clientset.CoreV1().Endpoints(namespace).Get(ctx, name, metav1.GetOptions{})
 }
@@ -222,7 +224,7 @@ func (c KubernetesChildClient) EnsureStorageClass(ctx context.Context, desired *
 		return err
 	}
 	if current.Provisioner != desired.Provisioner || current.VolumeBindingMode == nil || desired.VolumeBindingMode == nil || *current.VolumeBindingMode != *desired.VolumeBindingMode || current.ReclaimPolicy == nil || desired.ReclaimPolicy == nil || *current.ReclaimPolicy != *desired.ReclaimPolicy {
-		return fmt.Errorf("Child StorageClass %q conflicts with approved mapping", desired.Name)
+		return fmt.Errorf("child StorageClass %q conflicts with approved mapping", desired.Name)
 	}
 	return nil
 }
@@ -238,7 +240,7 @@ func nodeReady(node *corev1.Node) bool {
 
 func readyNode(nodes *corev1.NodeList) (*corev1.Node, error) {
 	if nodes == nil || len(nodes.Items) == 0 {
-		return nil, fmt.Errorf("Child logical Node list is empty")
+		return nil, fmt.Errorf("child logical Node list is empty")
 	}
 	for index := range nodes.Items {
 		if nodeReady(&nodes.Items[index]) {

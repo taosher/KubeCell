@@ -76,13 +76,6 @@ func quantityMap(values api.ResourceList) map[string]any {
 	return result
 }
 
-func foundationFeedback(names render.Names) []workv1.ManifestConfigOption {
-	return []workv1.ManifestConfigOption{{
-		ResourceIdentifier: workv1.ResourceIdentifier{Resource: "resourcequotas", Name: "kubecell-workload", Namespace: names.HostNamespace},
-		FeedbackRules:      []workv1.FeedbackRule{{Type: workv1.JSONPathsType, JsonPaths: []workv1.JsonPath{{Name: "hard", Path: ".status.hard"}, {Name: "used", Path: ".status.used"}}}},
-	}}
-}
-
 func instanceFeedback(names render.Names) []workv1.ManifestConfigOption {
 	return []workv1.ManifestConfigOption{
 		{ResourceIdentifier: workv1.ResourceIdentifier{Group: "k3k.io", Resource: "clusters", Name: names.K3kCluster, Namespace: names.HostNamespace}, FeedbackRules: []workv1.FeedbackRule{{Type: workv1.JSONPathsType, JsonPaths: []workv1.JsonPath{{Name: "phase", Path: ".status.phase"}}}}},

@@ -231,7 +231,8 @@ func main() {
 			CredentialReader: ocm.KubernetesHubCredentialReader{Client: hubClient},
 		}
 	} else {
-		setupLog.Info("OCM Cluster Proxy is not configured; Cell Host observations will remain degraded", "env", "KUBECELL_OCM_CLUSTER_PROXY_ADDRESS")
+		setupLog.Info("OCM Cluster Proxy is not configured; Cell Host observations will remain degraded",
+			"env", "KUBECELL_OCM_CLUSTER_PROXY_ADDRESS")
 	}
 	childFactory := controller.OCMChildObserverFactory{ProxyConfigProvider: proxyFactory}
 	inventoryFactory := controller.OCMInventoryReaderFactory{ProxyConfigProvider: proxyFactory}
@@ -243,11 +244,24 @@ func main() {
 	}
 
 	// +kubebuilder:scaffold:builder
-	if err := (&controller.CellReconciler{Client: mgr.GetClient(), InventoryReaderFactory: inventoryFactory, BaselineReaderFactory: baselineFactory}).SetupWithManager(mgr); err != nil {
+	cellReconciler := &controller.CellReconciler{
+		Client:                 mgr.GetClient(),
+		InventoryReaderFactory: inventoryFactory,
+		BaselineReaderFactory:  baselineFactory,
+	}
+	if err := cellReconciler.SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create Cell controller")
 		os.Exit(1)
 	}
-	if err := (&controller.VirtualClusterReconciler{Client: mgr.GetClient(), ChildObserverFactory: childFactory, HostReaderFactory: controller.OCMVirtualNodeHostReaderFactory{ProxyConfigProvider: proxyFactory}, AppsSuffix: appsSuffix}).SetupWithManager(mgr); err != nil {
+	vcReconciler := &controller.VirtualClusterReconciler{
+		Client:               mgr.GetClient(),
+		ChildObserverFactory: childFactory,
+		HostReaderFactory: controller.OCMVirtualNodeHostReaderFactory{
+			ProxyConfigProvider: proxyFactory,
+		},
+		AppsSuffix: appsSuffix,
+	}
+	if err := vcReconciler.SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create VirtualCluster controller")
 		os.Exit(1)
 	}

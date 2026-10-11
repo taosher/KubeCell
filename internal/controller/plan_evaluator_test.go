@@ -162,7 +162,7 @@ func TestVirtualClusterPlanReconcilerIsOneShotWithoutRequeue(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Reconcile() error = %v", err)
 	}
-	if result.Requeue || result.RequeueAfter != 0 {
+	if result.RequeueAfter != 0 {
 		t.Fatalf("plan reconcile result = %#v, want one-shot without requeue", result)
 	}
 }
@@ -186,12 +186,6 @@ func TestVirtualClusterPlanDefaultAndValidationReuseVirtualClusterContract(t *te
 	if err := badNamespace.ValidateCreate(); err == nil {
 		t.Fatal("ValidateCreate() accepted plan outside kubecell-system")
 	}
-}
-
-type planEvaluation struct {
-	Decision api.VirtualClusterPlanDecision
-	Checks   []api.VirtualClusterPlanCheck
-	Summary  api.VirtualClusterPlanResolvedSummary
 }
 
 func findPlanCheck(checks []api.VirtualClusterPlanCheck, name string) *api.VirtualClusterPlanCheck {

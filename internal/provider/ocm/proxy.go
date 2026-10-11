@@ -54,7 +54,7 @@ type RESTBaselineReader struct {
 
 func NewRESTHostReader(config *rest.Config) (*RESTHostReader, error) {
 	if config == nil {
-		return nil, fmt.Errorf("Host proxy REST config is nil")
+		return nil, fmt.Errorf("host proxy REST config is nil")
 	}
 	client, err := kubernetes.NewForConfig(config)
 	if err != nil {
@@ -65,7 +65,7 @@ func NewRESTHostReader(config *rest.Config) (*RESTHostReader, error) {
 
 func NewRESTBaselineReader(config *rest.Config) (*RESTBaselineReader, error) {
 	if config == nil {
-		return nil, fmt.Errorf("Host proxy REST config is nil")
+		return nil, fmt.Errorf("host proxy REST config is nil")
 	}
 	client, err := kubernetes.NewForConfig(config)
 	if err != nil {
@@ -80,7 +80,7 @@ func NewRESTBaselineReader(config *rest.Config) (*RESTBaselineReader, error) {
 
 func (r *RESTBaselineReader) ObserveBaseline(ctx context.Context, cell *api.Cell) (host.BaselineObservation, error) {
 	if r == nil || r.client == nil || r.extensions == nil {
-		return host.BaselineObservation{}, fmt.Errorf("Host baseline reader is not configured")
+		return host.BaselineObservation{}, fmt.Errorf("host baseline reader is not configured")
 	}
 	k3kNamespace := platform.K3kControllerNamespace
 	namespace, err := r.client.CoreV1().Namespaces().Get(ctx, k3kNamespace, metav1.GetOptions{})

@@ -82,6 +82,7 @@ func (r *VirtualClusterReconciler) SetupWithManager(manager ctrl.Manager) error 
 		Complete(r)
 }
 
+// nolint:gocyclo // Reconcile is an inherently branchy phase state machine; phases are already extracted into helpers.
 func (r *VirtualClusterReconciler) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
 	cluster := &api.VirtualCluster{}
 	if err := r.Get(ctx, request.NamespacedName, cluster); err != nil {
@@ -336,15 +337,16 @@ func (r *VirtualClusterReconciler) Reconcile(ctx context.Context, request reconc
 
 // mirrorChildIngresses collects child-cluster Ingresses plus backend Service/Endpoints for render.
 // Unreadable backends are skipped per rule (child-side eventual consistency); no sync happens when appsSuffix is empty.
-func mirrorChildIngresses(ctx context.Context, cluster *api.VirtualCluster, resolved api.ResolvedSnapshot, appsSuffix string, client k3k.ChildClient) ([]*unstructured.Unstructured, error) {
-	if client == nil || strings.TrimSpace(appsSuffix) == "" {
+func mirrorChildIngresses(ctx context.Context, cluster *api.VirtualCluster, resolved api.ResolvedSnapshot, appsSuffix string, childClient k3k.ChildClient) ([]*unstructured.Unstructured, error) {
+	if childClient == nil || strings.TrimSpace(appsSuffix) == "" {
 		return nil, nil
 	}
-	list, err := client.ListIngresses(ctx)
+	list, err := childClient.ListIngresses(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("list Child ingresses: %w", err)
 	}
 	services := map[string]*corev1.Service{}
+	// nolint:staticcheck // corev1.Endpoints deprecation requires migrating to discoveryv1.EndpointSlice; tracked separately.
 	endpoints := map[string]*corev1.Endpoints{}
 	backends := make([]render.ChildIngressBackend, 0)
 	for index := range list.Items {
@@ -363,17 +365,18 @@ func mirrorChildIngresses(ctx context.Context, cluster *api.VirtualCluster, reso
 				key := ingress.Namespace + "/" + path.Backend.Service.Name
 				service, ok := services[key]
 				if !ok {
-					fetched, fetchErr := client.GetService(ctx, ingress.Namespace, path.Backend.Service.Name)
+					fetched, fetchErr := childClient.GetService(ctx, ingress.Namespace, path.Backend.Service.Name)
 					if fetchErr != nil {
 						continue
 					}
 					service = fetched
 					services[key] = service
 				}
+				// nolint:staticcheck // corev1.Endpoints deprecation requires migrating to discoveryv1.EndpointSlice; tracked separately.
 				var endpointsForBackend *corev1.Endpoints
 				if cached, ok := endpoints[key]; ok {
 					endpointsForBackend = cached
-				} else if fetched, fetchErr := client.GetEndpoints(ctx, ingress.Namespace, path.Backend.Service.Name); fetchErr == nil {
+				} else if fetched, fetchErr := childClient.GetEndpoints(ctx, ingress.Namespace, path.Backend.Service.Name); fetchErr == nil {
 					endpointsForBackend = fetched
 					endpoints[key] = fetched
 				}
@@ -505,8 +508,9 @@ func (r *VirtualClusterReconciler) createOrUpdateWork(ctx context.Context, desir
 		desired.Labels[helpers.LabelVirtualClusterName],
 		desired.Labels[helpers.LabelVirtualClusterUID],
 	) {
-		return fmt.Errorf("ManifestWork %s/%s has foreign ownership labels", current.Namespace, current.Name)
+		return fmt.Errorf("manifestWork %s/%s has foreign ownership labels", current.Namespace, current.Name)
 	}
+	// nolint:staticcheck // client.Apply deprecation requires migrating to the ApplyConfiguration API; tracked separately.
 	return r.Patch(ctx, desired, client.Apply, client.ForceOwnership, client.FieldOwner("kubecell-controller"))
 }
 

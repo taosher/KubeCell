@@ -70,7 +70,7 @@ func (v VirtualClusterValidator) ValidateCreate(ctx context.Context, object *api
 		}
 		for _, existing := range clusters.Items {
 			if existing.Name == object.Name && existing.DeletionTimestamp == nil {
-				return nil, fmt.Errorf("VirtualCluster name %q is already active in namespace %q; names must be globally unique", object.Name, existing.Namespace)
+				return nil, fmt.Errorf("virtualCluster name %q is already active in namespace %q; names must be globally unique", object.Name, existing.Namespace)
 			}
 		}
 	}

@@ -15,11 +15,11 @@ import (
 
 func resolveVirtualCluster(cluster *api.VirtualCluster, cell *api.Cell, class *api.VirtualNodeClass) (api.ResolvedSnapshot, error) {
 	if cluster == nil || cell == nil || class == nil {
-		return api.ResolvedSnapshot{}, fmt.Errorf("VirtualCluster, Cell, and VirtualNodeClass are required")
+		return api.ResolvedSnapshot{}, fmt.Errorf("virtualCluster, Cell, and VirtualNodeClass are required")
 	}
 	machineProfile := cell.Spec.MachineProfile
 	if machineProfile.Name == "" {
-		return api.ResolvedSnapshot{}, fmt.Errorf("Cell machine profile is not declared")
+		return api.ResolvedSnapshot{}, fmt.Errorf("cell machine profile is not declared")
 	}
 	for resourceName, quantity := range class.Spec.Entitlement.WorkloadHard {
 		if !strings.HasPrefix(string(resourceName), "requests.") && !strings.HasPrefix(string(resourceName), "limits.") {
@@ -93,9 +93,9 @@ func resolveVirtualCluster(cluster *api.VirtualCluster, cell *api.Cell, class *a
 // profileFingerprint hashes only stable string content (names, quantities,
 // storage). It never formats structs with pointers, so repeated evaluations
 // of equal inputs produce equal hashes.
-func profileFingerprint(profile api.MachineProfile, quota api.ResourceList, storageClass string) string {
-	parts := []string{"profile=" + profile.Name, "storage=" + storageClass}
-	for _, device := range profile.Devices {
+func profileFingerprint(machineProfile api.MachineProfile, quota api.ResourceList, storageClass string) string {
+	parts := []string{"profile=" + machineProfile.Name, "storage=" + storageClass}
+	for _, device := range machineProfile.Devices {
 		parts = append(parts, "device="+device.Name+"/"+device.ResourceName)
 	}
 	keys := make([]string, 0, len(quota))

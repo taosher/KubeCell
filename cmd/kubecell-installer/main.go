@@ -36,7 +36,7 @@ func main() {
 	}
 }
 
-func run(args []string, stdout, stderr interface{ Write([]byte) (int, error) }) error {
+func run(args []string, stdout, stderr io.Writer) error {
 	if len(args) == 0 {
 		return fmt.Errorf("command is required: management, host, doctor, version, plan, suggest-class, or digest")
 	}
@@ -84,9 +84,10 @@ func run(args []string, stdout, stderr interface{ Write([]byte) (int, error) }) 
 	}
 }
 
-func runDoctor(args []string, stdout, stderr interface{ Write([]byte) (int, error) }, executor commandExecutor) error {
+func runDoctor(args []string, stdout, stderr io.Writer, executor commandExecutor) error {
 	if len(args) < 1 {
-		return fmt.Errorf("doctor requires management or host, --bundle, optional --dry-run, and repeatable --device for host")
+		return fmt.Errorf("doctor requires management or host, --bundle," +
+			" optional --dry-run, and repeatable --device for host")
 	}
 	target, err := installer.ParseTarget(args[0])
 	if err != nil {
@@ -115,12 +116,16 @@ func runDoctor(args []string, stdout, stderr interface{ Write([]byte) (int, erro
 	}
 	checks := installer.DoctorCommandsWithDevices(target, bundle, devices)
 	if target == installer.InstallHost && len(devices) == 0 {
-		if _, err := fmt.Fprintln(stdout, "H3 devices: skipped (pass --device KEY to enforce per-node device capacity)"); err != nil {
+		_, err := fmt.Fprintln(stdout,
+			"H3 devices: skipped (pass --device KEY to enforce per-node device capacity)")
+		if err != nil {
 			return err
 		}
 	}
 	for _, check := range checks {
-		if _, err := fmt.Fprintf(stdout, "[%s] $ %s %s\n", check.ID, check.Command.Program, strings.Join(check.Command.Args, " ")); err != nil {
+		_, err := fmt.Fprintf(stdout, "[%s] $ %s %s\n",
+			check.ID, check.Command.Program, strings.Join(check.Command.Args, " "))
+		if err != nil {
 			return err
 		}
 		if !*dryRun {
@@ -139,11 +144,12 @@ func bundleFlag(args []string) (string, error) {
 	return args[1], nil
 }
 
-func runInstall(targetName string, args []string, stdout, stderr interface{ Write([]byte) (int, error) }, executor commandExecutor) error {
+func runInstall(targetName string, args []string, stdout, stderr io.Writer, executor commandExecutor) error {
 	return runInstallWithExecutor(targetName, args, stdout, stderr, executor)
 }
 
-func runInstallWithExecutor(targetName string, args []string, stdout, stderr interface{ Write([]byte) (int, error) }, executor commandExecutor) error {
+func runInstallWithExecutor(targetName string, args []string, stdout, stderr io.Writer,
+	executor commandExecutor) error {
 	flags := flag.NewFlagSet(targetName, flag.ContinueOnError)
 	flags.SetOutput(stderr)
 	bundlePath := flags.String("bundle", "", "verified release bundle directory")
@@ -153,7 +159,8 @@ func runInstallWithExecutor(targetName string, args []string, stdout, stderr int
 	dryRun := flags.Bool("dry-run", false, "print commands without executing them")
 	cellName := flags.String("cell", "", "cell name for --step=cell (must equal the approved ManagedCluster name)")
 	profileName := flags.String("profile", "", "override discovered machine profile for --step=cell")
-	nodesFile := flags.String("nodes-file", "", "read `kubectl get nodes -o json` output from file instead of live cluster")
+	nodesFile := flags.String("nodes-file", "",
+		"read `kubectl get nodes -o json` output from file instead of live cluster")
 	kubeconfig := flags.String("kubeconfig", "", "kubeconfig for live host reads in --step=cell")
 	var deviceFlags stringSliceFlag
 	flags.Var(&deviceFlags, "device", "override device contract as name=resourceName (repeatable)")
@@ -161,7 +168,10 @@ func runInstallWithExecutor(targetName string, args []string, stdout, stderr int
 		return err
 	}
 	if targetName == string(installer.InstallHost) && *step == "cell" {
-		return runCellStep(cellStepOptions{cell: *cellName, profile: *profileName, devices: deviceFlags, nodesFile: *nodesFile, kubeconfig: *kubeconfig, apply: *apply}, stdout, stderr)
+		return runCellStep(cellStepOptions{
+			cell: *cellName, profile: *profileName, devices: deviceFlags,
+			nodesFile: *nodesFile, kubeconfig: *kubeconfig, apply: *apply,
+		}, stdout, stderr)
 	}
 	if *bundlePath == "" {
 		return fmt.Errorf("%s requires --bundle <release-directory>", targetName)
@@ -188,12 +198,14 @@ func runInstallWithExecutor(targetName string, args []string, stdout, stderr int
 	}
 	var commands []installer.Command
 	if target == installer.InstallManagement {
-		commands = installer.ManagementInstallCommands(bundle.OCMBundlePath, bundle.ManagementChart, bundle.KubecellCRDPath, bundle.ControllerImage)
+		commands = installer.ManagementInstallCommands(
+			bundle.OCMBundlePath, bundle.ManagementChart, bundle.KubecellCRDPath, bundle.ControllerImage)
 	} else {
 		commands = installer.HostInstallCommands(bundle)
-		if *step == "join" {
+		switch *step {
+		case "join":
 			commands = commands[:1]
-		} else if *step == "chart" {
+		case "chart":
 			commands = commands[1:]
 		}
 	}
@@ -233,8 +245,9 @@ type cellStepOptions struct {
 }
 
 // runCellStep implements host --step=cell: it only renders Cell YAML and prints it for the operator to apply.
-// Live discovery goes through kubectl (host context from environment/--kubeconfig); --nodes-file allows offline reproduction.
-func runCellStep(options cellStepOptions, stdout, stderr interface{ Write([]byte) (int, error) }) error {
+// Live discovery goes through kubectl (host context from environment/--kubeconfig);
+// --nodes-file allows offline reproduction.
+func runCellStep(options cellStepOptions, stdout, _ io.Writer) error {
 	if strings.TrimSpace(options.cell) == "" {
 		return fmt.Errorf("--step=cell requires --cell <name> equal to the approved ManagedCluster name")
 	}
@@ -262,11 +275,13 @@ func runCellStep(options cellStepOptions, stdout, stderr interface{ Write([]byte
 			deviceOverrides = discoveredDevices
 		}
 	}
-	rendered, err := installer.RenderCellYAML(installer.CellDraft{Name: options.cell, ProfileName: profile, Devices: deviceOverrides})
+	rendered, err := installer.RenderCellYAML(installer.CellDraft{
+		Name: options.cell, ProfileName: profile, Devices: deviceOverrides})
 	if err != nil {
 		return err
 	}
-	if _, err := fmt.Fprintf(stdout, "%s# Cell name must equal the approved ManagedCluster name.\n# Review and apply with: kubectl apply -f <this file>\n", rendered); err != nil {
+	if _, err := fmt.Fprintf(stdout, "%s# Cell name must equal the approved ManagedCluster name.\n"+
+		"# Review and apply with: kubectl apply -f <this file>\n", rendered); err != nil {
 		return err
 	}
 	return nil
@@ -298,12 +313,13 @@ func readNodesJSON(nodesFile, kubeconfig string) ([]byte, error) {
 	}
 	data, err := exec.Command("kubectl", kubectlArgs...).Output()
 	if err != nil {
-		return nil, fmt.Errorf("discover host nodes: %w (hint: use --nodes-file or point the kubeconfig context at the host)", err)
+		return nil, fmt.Errorf("discover host nodes: %w (hint: use --nodes-file "+
+			"or point the kubeconfig context at the host)", err)
 	}
 	return data, nil
 }
 
-func runSuggestClass(args []string, stdout, stderr interface{ Write([]byte) (int, error) }) error {
+func runSuggestClass(args []string, stdout, stderr io.Writer) error {
 	flags := flag.NewFlagSet("suggest-class", flag.ContinueOnError)
 	flags.SetOutput(stderr)
 	cellFile := flags.String("cell-file", "", "Cell YAML file, e.g. from `kubectl get cell NAME -o yaml`")
@@ -326,13 +342,14 @@ func runSuggestClass(args []string, stdout, stderr interface{ Write([]byte) (int
 	if err != nil {
 		return err
 	}
-	if _, err := fmt.Fprintf(stdout, "%s# workloadHard mirrors observed allocatable: trim the numbers to the\n# tenant envelope, then fill storageClassName with the certified host class.\n", rendered); err != nil {
+	if _, err := fmt.Fprintf(stdout, "%s# workloadHard mirrors observed allocatable: trim the numbers\n"+
+		"# to the tenant envelope, then fill storageClassName with the certified host class.\n", rendered); err != nil {
 		return err
 	}
 	return nil
 }
 
-func runLifecycle(operationName string, args []string, stdout, stderr interface{ Write([]byte) (int, error) }, executor commandExecutor) error {
+func runLifecycle(operationName string, args []string, stdout, stderr io.Writer, executor commandExecutor) error {
 	if len(args) < 1 || len(args) > 6 {
 		return fmt.Errorf("%s requires target, --bundle, and --confirm", operationName)
 	}
@@ -356,7 +373,8 @@ func runLifecycle(operationName string, args []string, stdout, stderr interface{
 			confirmed = true
 		default:
 			if strings.HasPrefix(arg, "--revision=") {
-				if _, scanErr := fmt.Sscanf(strings.TrimPrefix(arg, "--revision="), "%d", &revision); scanErr != nil || revision < 1 {
+				trimmed := strings.TrimPrefix(arg, "--revision=")
+				if _, scanErr := fmt.Sscanf(trimmed, "%d", &revision); scanErr != nil || revision < 1 {
 					return fmt.Errorf("invalid --revision")
 				}
 			} else {

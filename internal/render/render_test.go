@@ -14,6 +14,8 @@ import (
 	"github.com/kubecell/kubecell/internal/platform"
 )
 
+const testTopolvmProvisionerName = "topolvm-provisioner"
+
 func testNames() Names {
 	return Names{
 		HostNamespace:    "kc-team-a-training-01234567",
@@ -48,8 +50,8 @@ func testResolved() api.ResolvedSnapshot {
 		},
 		AcceleratorKeys: []string{"huawei.com/Ascend910"},
 		Storage: api.StorageMappingSpec{Class: api.StorageClassMapping{
-			ChildName:            "topolvm-provisioner",
-			HostName:             "topolvm-provisioner",
+			ChildName:            testTopolvmProvisionerName,
+			HostName:             testTopolvmProvisionerName,
 			VolumeBindingMode:    storagev1.VolumeBindingWaitForFirstConsumer,
 			ReclaimPolicy:        corev1.PersistentVolumeReclaimRetain,
 			AllowVolumeExpansion: true,
@@ -57,6 +59,7 @@ func testResolved() api.ResolvedSnapshot {
 	}
 }
 
+// nolint:gocyclo // Table-driven boundary assertions; splitting would obscure the cross-field contract.
 func TestRenderFoundationCreatesHardHostBoundary(t *testing.T) {
 	objects, err := RenderFoundation(testCluster(), testResolved(), testNames())
 	if err != nil {
@@ -178,7 +181,7 @@ func TestRenderFoundationAddsNarrowPortForwardCompatibilityRBAC(t *testing.T) {
 	}
 }
 
-func hasRBACRule(rules []interface{}, group, resource, verb string) bool {
+func hasRBACRule(rules []interface{}, group, resourceName, verb string) bool {
 	for _, raw := range rules {
 		rule, ok := raw.(map[string]interface{})
 		if !ok {
@@ -187,7 +190,7 @@ func hasRBACRule(rules []interface{}, group, resource, verb string) bool {
 		groups, _, _ := unstructured.NestedStringSlice(rule, "apiGroups")
 		resources, _, _ := unstructured.NestedStringSlice(rule, "resources")
 		verbs, _, _ := unstructured.NestedStringSlice(rule, "verbs")
-		if containsString(groups, group) && containsString(resources, resource) && containsString(verbs, verb) {
+		if containsString(groups, group) && containsString(resources, resourceName) && containsString(verbs, verb) {
 			return true
 		}
 	}
@@ -362,7 +365,7 @@ func TestRenderFoundationPublishesHostAdmissionPolicyLabels(t *testing.T) {
 	if annotations["kubecell.io/profile-label-key"] != platform.ProfileLabelKey {
 		t.Fatalf("profile label key annotation = %q", annotations["kubecell.io/profile-label-key"])
 	}
-	if annotations["kubecell.io/storage-class-names"] != "topolvm-provisioner" {
+	if annotations["kubecell.io/storage-class-names"] != testTopolvmProvisionerName {
 		t.Fatalf("storage class annotation = %q", annotations["kubecell.io/storage-class-names"])
 	}
 	if annotations["kubecell.io/allowed-resource-names"] != "huawei.com/Ascend910" {
@@ -479,7 +482,7 @@ func TestRenderK3kClusterPinsPersistentServerStorage(t *testing.T) {
 	if persistence["type"] != "dynamic" {
 		t.Fatalf("persistence type = %v, want dynamic", persistence["type"])
 	}
-	if persistence["storageClassName"] != "topolvm-provisioner" {
+	if persistence["storageClassName"] != testTopolvmProvisionerName {
 		t.Fatalf("persistence storageClassName = %v", persistence["storageClassName"])
 	}
 	if persistence["storageRequestSize"] != "2Gi" {
@@ -492,7 +495,7 @@ func TestRenderChildStorageClassMapsOnlyApprovedHostClass(t *testing.T) {
 	if err != nil {
 		t.Fatalf("RenderChildStorageClass() error = %v", err)
 	}
-	if storageClass.Name != "topolvm-provisioner" {
+	if storageClass.Name != testTopolvmProvisionerName {
 		t.Fatalf("child StorageClass name = %q", storageClass.Name)
 	}
 	if storageClass.Provisioner != "topolvm.io" {
@@ -584,8 +587,10 @@ func testMirrorBackend() ChildIngressBackend {
 			ObjectMeta: metav1.ObjectMeta{Name: "web-svc", Namespace: "default"},
 			Spec:       corev1.ServiceSpec{Ports: []corev1.ServicePort{{Name: "http", Port: 80}}},
 		},
+		// nolint:staticcheck // corev1.Endpoints deprecation requires migrating to discoveryv1.EndpointSlice; tracked separately.
 		Endpoints: &corev1.Endpoints{
 			ObjectMeta: metav1.ObjectMeta{Name: "web-svc", Namespace: "default"},
+			// nolint:staticcheck // corev1.Endpoints deprecation requires migrating to discoveryv1.EndpointSlice; tracked separately.
 			Subsets: []corev1.EndpointSubset{{
 				Addresses: []corev1.EndpointAddress{{IP: "10.42.0.7"}},
 				Ports:     []corev1.EndpointPort{{Name: "http", Port: 80, Protocol: corev1.ProtocolTCP}},

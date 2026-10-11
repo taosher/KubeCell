@@ -35,7 +35,7 @@ type OCMVirtualNodeHostReaderFactory struct {
 
 func (f OCMInventoryReaderFactory) ForCell(ctx context.Context, cell *api.Cell) (InventoryReader, error) {
 	if f.ProxyConfigProvider == nil {
-		return nil, fmt.Errorf("OCM Cluster Proxy config provider is not configured")
+		return nil, fmt.Errorf("ocm Cluster Proxy config provider is not configured")
 	}
 	config, err := f.ProxyConfigProvider.RESTConfigForCell(ctx, cell)
 	if err != nil {
@@ -46,7 +46,7 @@ func (f OCMInventoryReaderFactory) ForCell(ctx context.Context, cell *api.Cell) 
 
 func (f OCMBaselineReaderFactory) ForCell(ctx context.Context, cell *api.Cell) (host.BaselineReader, error) {
 	if f.ProxyConfigProvider == nil {
-		return nil, fmt.Errorf("OCM Cluster Proxy config provider is not configured")
+		return nil, fmt.Errorf("ocm Cluster Proxy config provider is not configured")
 	}
 	config, err := f.ProxyConfigProvider.RESTConfigForCell(ctx, cell)
 	if err != nil {
@@ -57,7 +57,7 @@ func (f OCMBaselineReaderFactory) ForCell(ctx context.Context, cell *api.Cell) (
 
 func (f OCMVirtualNodeHostReaderFactory) ForCell(ctx context.Context, cell *api.Cell) (VirtualNodeHostReader, error) {
 	if f.ProxyConfigProvider == nil {
-		return nil, fmt.Errorf("OCM Cluster Proxy config provider is not configured")
+		return nil, fmt.Errorf("ocm Cluster Proxy config provider is not configured")
 	}
 	config, err := f.ProxyConfigProvider.RESTConfigForCell(ctx, cell)
 	if err != nil {
@@ -68,7 +68,7 @@ func (f OCMVirtualNodeHostReaderFactory) ForCell(ctx context.Context, cell *api.
 
 func (f OCMChildObserverFactory) ForCell(ctx context.Context, cell *api.Cell) (ChildObserver, error) {
 	if f.ProxyConfigProvider == nil {
-		return nil, fmt.Errorf("OCM Cluster Proxy config provider is not configured")
+		return nil, fmt.Errorf("ocm Cluster Proxy config provider is not configured")
 	}
 	config, err := f.ProxyConfigProvider.RESTConfigForCell(ctx, cell)
 	if err != nil {

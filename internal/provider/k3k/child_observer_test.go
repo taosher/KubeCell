@@ -150,6 +150,7 @@ func (f fakeChildClient) GetService(context.Context, string, string) (*corev1.Se
 	return nil, fmt.Errorf("not found")
 }
 
+// nolint:staticcheck // corev1.Endpoints deprecation requires migrating to discoveryv1.EndpointSlice; tracked separately.
 func (f fakeChildClient) GetEndpoints(context.Context, string, string) (*corev1.Endpoints, error) {
 	return nil, fmt.Errorf("not found")
 }

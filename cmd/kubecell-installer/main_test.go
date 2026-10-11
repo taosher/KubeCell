@@ -126,7 +126,8 @@ func TestRunRejectsApplyWithoutExplicitConfirmation(t *testing.T) {
 
 func TestRunHostApplyRequiresExplicitEnrollmentStep(t *testing.T) {
 	root := installerFixture(t)
-	if err := run([]string{"host", "--bundle", root, "--apply", "--confirm"}, &bytes.Buffer{}, &bytes.Buffer{}); err == nil {
+	args := []string{"host", "--bundle", root, "--apply", "--confirm"}
+	if err := run(args, &bytes.Buffer{}, &bytes.Buffer{}); err == nil {
 		t.Fatal("host apply without an enrollment step was accepted")
 	}
 }
@@ -135,7 +136,8 @@ func TestRunHostEnrollmentStopsBeforeApproval(t *testing.T) {
 	root := installerFixture(t)
 	executor := &recordingExecutor{}
 	var output bytes.Buffer
-	if err := runInstallWithExecutor("host", []string{"--bundle", root, "--step=join", "--apply", "--confirm"}, &output, &bytes.Buffer{}, executor); err != nil {
+	args := []string{"--bundle", root, "--step=join", "--apply", "--confirm"}
+	if err := runInstallWithExecutor("host", args, &output, &bytes.Buffer{}, executor); err != nil {
 		t.Fatalf("runInstallWithExecutor() error = %v", err)
 	}
 	if len(executor.commands) != 1 || !strings.HasPrefix(executor.commands[0], "clusteradm ") {
@@ -157,7 +159,8 @@ func TestRunHostDryRunAcceptsExplicitStep(t *testing.T) {
 func TestRunHostChartStepExecutesOnlyAfterApproval(t *testing.T) {
 	root := installerFixture(t)
 	executor := &recordingExecutor{}
-	if err := runInstallWithExecutor("host", []string{"--bundle", root, "--step=chart", "--apply", "--confirm"}, &bytes.Buffer{}, &bytes.Buffer{}, executor); err != nil {
+	args := []string{"--bundle", root, "--step=chart", "--apply", "--confirm"}
+	if err := runInstallWithExecutor("host", args, &bytes.Buffer{}, &bytes.Buffer{}, executor); err != nil {
 		t.Fatalf("runInstallWithExecutor() error = %v", err)
 	}
 	if len(executor.commands) != 1 || !strings.HasPrefix(executor.commands[0], "helm upgrade") {
@@ -179,17 +182,35 @@ func installerFixture(t *testing.T) string {
 	if err := os.WriteFile(filepath.Join(root, "ocm/join.yaml"), []byte("apiVersion: v1\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(root, "crds/kubecell.io_cells.yaml"), []byte("apiVersion: apiextensions.k8s.io/v1\nkind: CustomResourceDefinition\n"), 0o644); err != nil {
+	crdPath := filepath.Join(root, "crds/kubecell.io_cells.yaml")
+	crdYAML := "apiVersion: apiextensions.k8s.io/v1\nkind: CustomResourceDefinition\n"
+	if err := os.WriteFile(crdPath, []byte(crdYAML), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(root, "charts/kubecell-management/Chart.yaml"), []byte("name: management\n"), 0o644); err != nil {
+	mgmtChart := filepath.Join(root, "charts/kubecell-management/Chart.yaml")
+	if err := os.WriteFile(mgmtChart, []byte("name: management\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(root, "charts/kubecell-host/Chart.yaml"), []byte("name: host\n"), 0o644); err != nil {
+	hostChart := filepath.Join(root, "charts/kubecell-host/Chart.yaml")
+	if err := os.WriteFile(hostChart, []byte("name: host\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	digest := sha256HexForTest([]byte("apiVersion: v1\n"))
-	manifest := "kubecellVersion: 0.1.0\nk3kVersion: v1.2.0\nchildK3sVersion: v1.34.2+k3s1\nocmVersion: v1.3.0\nocmBundleDigest: sha256:" + digest + "\nocmBundlePath: ocm/bundle.yaml\nkubecellCRDPath: crds\nocmJoinBundlePath: ocm/join.yaml\nocmJoinCommand:\n- clusteradm\n- join\n- --bundle\n- '{{OCMJoinBundlePath}}'\nmanagementChartPath: charts/kubecell-management\nhostChartPath: charts/kubecell-host\ncontrollerImage: ghcr.io/kubecell/kubecell@sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef\nhostProfiles:\n- k3s-v1.35.7+k3s1\nappsSuffix: apps.example.com\n"
+	manifest := "kubecellVersion: 0.1.0\n" +
+		"k3kVersion: v1.2.0\n" +
+		"childK3sVersion: v1.34.2+k3s1\n" +
+		"ocmVersion: v1.3.0\n" +
+		"ocmBundleDigest: sha256:" + digest + "\n" +
+		"ocmBundlePath: ocm/bundle.yaml\n" +
+		"kubecellCRDPath: crds\n" +
+		"ocmJoinBundlePath: ocm/join.yaml\n" +
+		"ocmJoinCommand:\n- clusteradm\n- join\n- --bundle\n- '{{OCMJoinBundlePath}}'\n" +
+		"managementChartPath: charts/kubecell-management\n" +
+		"hostChartPath: charts/kubecell-host\n" +
+		"controllerImage: ghcr.io/kubecell/kubecell@sha256:0123456789abcdef0123456789abcdef" +
+		"0123456789abcdef0123456789abcdef\n" +
+		"hostProfiles:\n- k3s-v1.35.7+k3s1\n" +
+		"appsSuffix: apps.example.com\n"
 	manifest += "artifactDigests:\n"
 	for path, digest := range artifactDigestsForTest(t, root) {
 		manifest += "  " + path + ": sha256:" + digest + "\n"
@@ -284,13 +305,20 @@ func writeNodesFile(t *testing.T, items string) string {
 }
 
 func TestRunHostCellStepRendersDiscoveredCell(t *testing.T) {
-	nodes := writeNodesFile(t, `{"metadata": {"name": "host-01", "labels": {"hardware.kubecell.io/profile": "ascend-910b"}}, "status": {"allocatable": {"cpu": "8", "huawei.com/Ascend910": "4"}}}`)
+	nodes := writeNodesFile(t, `{"metadata": {"name": "host-01", `+
+		`"labels": {"hardware.kubecell.io/profile": "ascend-910b"}}, `+
+		`"status": {"allocatable": {"cpu": "8", "huawei.com/Ascend910": "4"}}}`)
 	var output bytes.Buffer
-	if err := run([]string{"host", "--step=cell", "--cell", "cell1", "--nodes-file", nodes}, &output, &bytes.Buffer{}); err != nil {
+	args := []string{"host", "--step=cell", "--cell", "cell1", "--nodes-file", nodes}
+	if err := run(args, &output, &bytes.Buffer{}); err != nil {
 		t.Fatalf("run() error = %v", err)
 	}
 	result := output.String()
-	for _, want := range []string{"kind: Cell", "name: cell1", "ascend-910b", "huawei.com/Ascend910", "managedClusterRef"} {
+	wants := []string{
+		"kind: Cell", "name: cell1", "ascend-910b",
+		"huawei.com/Ascend910", "managedClusterRef",
+	}
+	for _, want := range wants {
 		if !strings.Contains(result, want) {
 			t.Fatalf("cell output misses %q:\n%s", want, result)
 		}
@@ -299,7 +327,9 @@ func TestRunHostCellStepRendersDiscoveredCell(t *testing.T) {
 
 func TestRunHostCellStepAcceptsExplicitOverrides(t *testing.T) {
 	var output bytes.Buffer
-	err := run([]string{"host", "--step=cell", "--cell", "cell1", "--profile", "ascend-910b", "--device", "Ascend910=huawei.com/Ascend910"}, &output, &bytes.Buffer{})
+	args := []string{"host", "--step=cell", "--cell", "cell1",
+		"--profile", "ascend-910b", "--device", "Ascend910=huawei.com/Ascend910"}
+	err := run(args, &output, &bytes.Buffer{})
 	if err != nil {
 		t.Fatalf("run() error = %v", err)
 	}
@@ -310,29 +340,42 @@ func TestRunHostCellStepAcceptsExplicitOverrides(t *testing.T) {
 
 func TestRunHostCellStepRequiresCellNameAndRejectsApply(t *testing.T) {
 	nodes := writeNodesFile(t, `{}`)
-	if err := run([]string{"host", "--step=cell", "--nodes-file", nodes}, &bytes.Buffer{}, &bytes.Buffer{}); err == nil {
+	if err := run([]string{"host", "--step=cell", "--nodes-file", nodes},
+		&bytes.Buffer{}, &bytes.Buffer{}); err == nil {
 		t.Fatal("cell step without --cell was accepted")
 	}
-	if err := run([]string{"host", "--step=cell", "--cell", "cell1", "--nodes-file", nodes, "--apply", "--confirm"}, &bytes.Buffer{}, &bytes.Buffer{}); err == nil {
+	applyArgs := []string{"host", "--step=cell", "--cell", "cell1",
+		"--nodes-file", nodes, "--apply", "--confirm"}
+	if err := run(applyArgs, &bytes.Buffer{}, &bytes.Buffer{}); err == nil {
 		t.Fatal("cell step with --apply was accepted")
 	}
-	if err := run([]string{"host", "--step=cell", "--cell", "cell1", "--profile", "p", "--device", "bad-flag"}, &bytes.Buffer{}, &bytes.Buffer{}); err == nil {
+	badArgs := []string{"host", "--step=cell", "--cell", "cell1",
+		"--profile", "p", "--device", "bad-flag"}
+	if err := run(badArgs, &bytes.Buffer{}, &bytes.Buffer{}); err == nil {
 		t.Fatal("malformed --device was accepted")
 	}
 }
 
 func TestRunSuggestClassRendersDraftFromCellFile(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "cell.yaml")
-	cell := "apiVersion: kubecell.io/v1alpha1\nkind: Cell\nmetadata:\n  name: cell1\nstatus:\n  inventory:\n    cpu: {allocatable: 16}\n    huawei.com/Ascend910: {allocatable: \"8\"}\n"
+	cell := "apiVersion: kubecell.io/v1alpha1\nkind: Cell\nmetadata:\n  name: cell1\n" +
+		"status:\n  inventory:\n    cpu: {allocatable: 16}\n" +
+		"    huawei.com/Ascend910: {allocatable: \"8\"}\n"
 	if err := os.WriteFile(path, []byte(cell), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	var output bytes.Buffer
-	if err := run([]string{"suggest-class", "--cell-file", path, "--name", "ascend-910b"}, &output, &bytes.Buffer{}); err != nil {
+	args := []string{"suggest-class", "--cell-file", path, "--name", "ascend-910b"}
+	if err := run(args, &output, &bytes.Buffer{}); err != nil {
 		t.Fatalf("run() error = %v", err)
 	}
 	result := output.String()
-	for _, want := range []string{"kind: VirtualNodeClass", "name: ascend-910b", "requests.huawei.com/Ascend910", "limits.huawei.com/Ascend910", "storageClassName"} {
+	wants := []string{
+		"kind: VirtualNodeClass", "name: ascend-910b",
+		"requests.huawei.com/Ascend910", "limits.huawei.com/Ascend910",
+		"storageClassName",
+	}
+	for _, want := range wants {
 		if !strings.Contains(result, want) {
 			t.Fatalf("class draft misses %q:\n%s", want, result)
 		}
@@ -340,10 +383,13 @@ func TestRunSuggestClassRendersDraftFromCellFile(t *testing.T) {
 }
 
 func TestRunSuggestClassRequiresCellFileAndName(t *testing.T) {
-	if err := run([]string{"suggest-class", "--name", "x"}, &bytes.Buffer{}, &bytes.Buffer{}); err == nil {
+	if err := run([]string{"suggest-class", "--name", "x"},
+		&bytes.Buffer{}, &bytes.Buffer{}); err == nil {
 		t.Fatal("suggest-class without --cell-file was accepted")
 	}
-	if err := run([]string{"suggest-class", "--cell-file", filepath.Join(t.TempDir(), "missing.yaml"), "--name", "x"}, &bytes.Buffer{}, &bytes.Buffer{}); err == nil {
+	missing := filepath.Join(t.TempDir(), "missing.yaml")
+	args := []string{"suggest-class", "--cell-file", missing, "--name", "x"}
+	if err := run(args, &bytes.Buffer{}, &bytes.Buffer{}); err == nil {
 		t.Fatal("suggest-class with missing file was accepted")
 	}
 }

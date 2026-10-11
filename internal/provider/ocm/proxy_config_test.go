@@ -22,8 +22,10 @@ import (
 	"github.com/kubecell/kubecell/internal/platform"
 )
 
+const testProxyCellName = "cell-a"
+
 func testProxyCell() *api.Cell {
-	return &api.Cell{Spec: api.CellSpec{ManagedClusterRef: api.ObjectReference{Name: "cell-a"}}}
+	return &api.Cell{Spec: api.CellSpec{ManagedClusterRef: api.ObjectReference{Name: testProxyCellName}}}
 }
 
 func TestKonnectivityConfigProviderBuildsManagedClusterConfig(t *testing.T) {
@@ -41,18 +43,18 @@ func TestKonnectivityConfigProviderBuildsManagedClusterConfig(t *testing.T) {
 	if config.Host != "https://cell-a" || config.BearerToken != "msa-token" || config.Dial == nil {
 		t.Fatalf("config = %#v", config)
 	}
-	if config.TLSClientConfig.ServerName != "kubernetes.default.svc" {
-		t.Fatalf("TLS server name = %q", config.TLSClientConfig.ServerName)
+	if config.ServerName != "kubernetes.default.svc" {
+		t.Fatalf("TLS server name = %q", config.ServerName)
 	}
-	if string(config.TLSClientConfig.CAData) != "host-ca" {
-		t.Fatalf("TLS CA data = %q", config.TLSClientConfig.CAData)
+	if string(config.CAData) != "host-ca" {
+		t.Fatalf("TLS CA data = %q", config.CAData)
 	}
 }
 
 func TestHubSecretTokenReaderRequiresTokenData(t *testing.T) {
 	cell := testProxyCell()
 	reader := HubSecretReader{GetSecret: func(_ context.Context, namespace, name string) (*corev1.Secret, error) {
-		if namespace != "cell-a" {
+		if namespace != testProxyCellName {
 			t.Fatalf("secret namespace = %q, want cell-a", namespace)
 		}
 		if name != platform.ManagedServiceAccountName {
@@ -66,8 +68,9 @@ func TestHubSecretTokenReaderRequiresTokenData(t *testing.T) {
 }
 
 func TestKubernetesHubTokenReaderUsesManagedClusterNamespace(t *testing.T) {
+	// nolint:staticcheck // fake.NewSimpleClientset replacement requires generated apply configurations; tracked separately.
 	client := fake.NewSimpleClientset(&corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{Name: platform.ManagedServiceAccountName, Namespace: "cell-a"},
+		ObjectMeta: metav1.ObjectMeta{Name: platform.ManagedServiceAccountName, Namespace: testProxyCellName},
 		Data:       map[string][]byte{"token": []byte("msa-token")},
 	})
 	reader := KubernetesHubCredentialReader{Client: client}

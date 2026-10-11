@@ -171,19 +171,19 @@ func ValidateCompatibility(manifest CompatibilityManifest) error {
 		return fmt.Errorf("kubecell version is required")
 	}
 	if manifest.K3kVersion != platform.K3kVersion {
-		return fmt.Errorf("K3k version %q is not the certified Shared Mode baseline", manifest.K3kVersion)
+		return fmt.Errorf("k3k version %q is not the certified Shared Mode baseline", manifest.K3kVersion)
 	}
 	if manifest.ChildK3sVersion != platform.ChildK3sVersion {
-		return fmt.Errorf("Child K3s version %q is not the certified target", manifest.ChildK3sVersion)
+		return fmt.Errorf("child K3s version %q is not the certified target", manifest.ChildK3sVersion)
 	}
 	if manifest.OCMVersion == "" || manifest.OCMBundleDigest == "" {
-		return fmt.Errorf("OCM version and bundle digest are required")
+		return fmt.Errorf("ocm version and bundle digest are required")
 	}
 	if len(manifest.HostProfiles) == 0 {
 		return fmt.Errorf("at least one Host compatibility profile is required")
 	}
 	if len(manifest.OCMJoinCommand) == 0 {
-		return fmt.Errorf("OCM join command is required")
+		return fmt.Errorf("ocm join command is required")
 	}
 	if err := ValidateAppsSuffix(manifest.AppsSuffix); err != nil {
 		return err
@@ -283,7 +283,7 @@ func verifyLegacyOCMBundleDigest(path, expected string) error {
 		return fmt.Errorf("read OCM bundle: %w", err)
 	}
 	if actual := sha256Hex(data); actual != strings.TrimPrefix(expected, "sha256:") {
-		return fmt.Errorf("OCM bundle digest mismatch: got sha256:%s, want %s", actual, expected)
+		return fmt.Errorf("ocm bundle digest mismatch: got sha256:%s, want %s", actual, expected)
 	}
 	return nil
 }
@@ -619,9 +619,9 @@ func RenderCellYAML(draft CellDraft) (string, error) {
 			MachineProfile:    api.MachineProfile{Name: draft.ProfileName, Devices: draft.Devices},
 		},
 	}
-	cell.TypeMeta.Kind = "Cell"
-	cell.TypeMeta.APIVersion = api.GroupVersion.String()
-	cell.ObjectMeta.Name = draft.Name
+	cell.Kind = "Cell"
+	cell.APIVersion = api.GroupVersion.String()
+	cell.Name = draft.Name
 	data, err := yaml.Marshal(cell)
 	if err != nil {
 		return "", fmt.Errorf("marshal Cell: %w", err)
@@ -659,9 +659,9 @@ func SuggestClassYAML(cell *api.Cell, className string) (string, error) {
 			StorageClassName: "",
 		},
 	}
-	class.TypeMeta.Kind = "VirtualNodeClass"
-	class.TypeMeta.APIVersion = api.GroupVersion.String()
-	class.ObjectMeta.Name = className
+	class.Kind = "VirtualNodeClass"
+	class.APIVersion = api.GroupVersion.String()
+	class.Name = className
 	data, err := yaml.Marshal(class)
 	if err != nil {
 		return "", fmt.Errorf("marshal VirtualNodeClass: %w", err)

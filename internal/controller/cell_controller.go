@@ -63,6 +63,7 @@ func (r *CellReconciler) SetupWithManager(manager ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(manager).For(&api.Cell{}).Complete(r)
 }
 
+// nolint:gocyclo // Reconcile is an inherently branchy phase state machine; phases are already extracted into helpers.
 func (r *CellReconciler) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
 	cell := &api.Cell{}
 	if err := r.Get(ctx, request.NamespacedName, cell); err != nil {
@@ -193,7 +194,7 @@ func (r *CellReconciler) Reconcile(ctx context.Context, request reconcile.Reques
 	} else {
 		cell.Status.Phase = api.CellPhaseDegraded
 		setCellCondition(cell, "Joined", conditionStatus(joined), "ManagedClusterState", "OCM ManagedCluster joined state is not ready")
-		if leaseErr == nil && !(availableCondition && !leaseFresh) {
+		if leaseErr == nil && (!availableCondition || leaseFresh) {
 			setCellCondition(cell, "Available", conditionStatus(available), "ManagedClusterState", "OCM ManagedCluster available state is not ready")
 		}
 	}

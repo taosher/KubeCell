@@ -770,6 +770,7 @@ func containsBytes(value, fragment []byte) bool {
 type fakeMirrorChildClient struct {
 	ingresses *networkingv1.IngressList
 	services  map[string]*corev1.Service
+	// nolint:staticcheck // corev1.Endpoints deprecation requires migrating to discoveryv1.EndpointSlice; tracked separately.
 	endpoints map[string]*corev1.Endpoints
 }
 
@@ -790,6 +791,8 @@ func (f fakeMirrorChildClient) GetService(_ context.Context, namespace, name str
 	}
 	return service, nil
 }
+
+// nolint:staticcheck // corev1.Endpoints deprecation requires migrating to discoveryv1.EndpointSlice; tracked separately.
 func (f fakeMirrorChildClient) GetEndpoints(_ context.Context, namespace, name string) (*corev1.Endpoints, error) {
 	return f.endpoints[namespace+"/"+name], nil
 }
@@ -834,6 +837,7 @@ func TestMirrorChildIngressesRendersOnlyKubecellClass(t *testing.T) {
 		services: map[string]*corev1.Service{
 			"default/web-svc": {ObjectMeta: metav1.ObjectMeta{Name: "web-svc", Namespace: "default"}, Spec: corev1.ServiceSpec{Ports: []corev1.ServicePort{{Port: 80}}}},
 		},
+		// nolint:staticcheck // corev1.Endpoints deprecation requires migrating to discoveryv1.EndpointSlice; tracked separately.
 		endpoints: map[string]*corev1.Endpoints{},
 	}
 	cluster := &api.VirtualCluster{ObjectMeta: metav1.ObjectMeta{Name: "shop", Namespace: "team-a", UID: "uid-1234"}, Spec: api.VirtualClusterSpec{CellRef: api.ObjectReference{Name: "cell-ci"}}}

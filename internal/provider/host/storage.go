@@ -7,6 +7,9 @@ import (
 	storagev1 "k8s.io/api/storage/v1"
 )
 
+// topolvmProvisioner is the CSI provisioner name required for certified storage classes.
+const topolvmProvisioner = "topolvm.io"
+
 func ValidateStorageClass(class *storagev1.StorageClass, expectedName string) error {
 	if class == nil {
 		return fmt.Errorf("storage class is nil")
@@ -14,7 +17,7 @@ func ValidateStorageClass(class *storagev1.StorageClass, expectedName string) er
 	if class.Name != expectedName {
 		return fmt.Errorf("storage class name %q does not match expected %q", class.Name, expectedName)
 	}
-	if class.Provisioner != "topolvm.io" {
+	if class.Provisioner != topolvmProvisioner {
 		return fmt.Errorf("storage class provisioner %q is not certified TopoLVM", class.Provisioner)
 	}
 	if class.VolumeBindingMode == nil || *class.VolumeBindingMode != storagev1.VolumeBindingWaitForFirstConsumer {

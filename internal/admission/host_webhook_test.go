@@ -164,8 +164,8 @@ func newHostWorkloadWebhook(t *testing.T, objects ...client.Object) *HostWorkloa
 func podAdmissionRequest(t *testing.T, namespace, name string, pod corev1.Pod) admission.Request {
 	t.Helper()
 	pod.TypeMeta = metav1.TypeMeta{APIVersion: "v1", Kind: "Pod"}
-	pod.ObjectMeta.Namespace = namespace
-	pod.ObjectMeta.Name = name
+	pod.Namespace = namespace
+	pod.Name = name
 	raw, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&pod)
 	if err != nil {
 		t.Fatal(err)

@@ -51,7 +51,8 @@ func TestCRDLifecycleAndStatusSubresource(t *testing.T) {
 		t.Fatalf("create envtest client: %v", err)
 	}
 	ctx := context.Background()
-	if err := clientset.Create(ctx, &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "kubecell-system"}}); err != nil {
+	ns := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "kubecell-system"}}
+	if err := clientset.Create(ctx, ns); err != nil {
 		t.Fatalf("create test namespace: %v", err)
 	}
 	cell := newCellFixture("kubecell-system", "cell-a", "managed-a")
@@ -98,7 +99,10 @@ func TestCRDLifecycleAndStatusSubresource(t *testing.T) {
 
 	plan := &api.VirtualClusterPlan{
 		ObjectMeta: metav1.ObjectMeta{Name: "training-plan", Namespace: "kubecell-system"},
-		Spec:       api.VirtualClusterPlanSpec{VirtualCluster: api.VirtualClusterSpec{CellRef: api.ObjectReference{Name: "cell-a", Namespace: "kubecell-system"}, ClassRef: api.ObjectReference{Name: "small"}}},
+		Spec: api.VirtualClusterPlanSpec{VirtualCluster: api.VirtualClusterSpec{
+			CellRef:  api.ObjectReference{Name: "cell-a", Namespace: "kubecell-system"},
+			ClassRef: api.ObjectReference{Name: "small"},
+		}},
 	}
 	if err := clientset.Create(ctx, plan); err != nil {
 		t.Fatalf("create VirtualClusterPlan: %v", err)
@@ -135,14 +139,23 @@ func TestControllerObjectsCanBeStoredWithOCMTypes(t *testing.T) {
 		}
 		goModCache = filepath.Join(home, "go", "pkg", "mod")
 	}
-	ocmCRDs := filepath.Join(goModCache, "open-cluster-management.io", "api@v1.3.0", "cluster", "v1", "0000_00_clusters.open-cluster-management.io_managedclusters.crd.yaml")
-	workCRDs := filepath.Join(goModCache, "open-cluster-management.io", "api@v1.3.0", "work", "v1", "0000_00_work.open-cluster-management.io_manifestworks.crd.yaml")
-	testEnvironment := &envtest.Environment{CRDDirectoryPaths: []string{filepath.Join(root, "config", "crd", "bases"), ocmCRDs, workCRDs}, BinaryAssetsDirectory: assets}
+	ocmCRDs := filepath.Join(goModCache, "open-cluster-management.io", "api@v1.3.0",
+		"cluster", "v1", "0000_00_clusters.open-cluster-management.io_managedclusters.crd.yaml")
+	workCRDs := filepath.Join(goModCache, "open-cluster-management.io", "api@v1.3.0",
+		"work", "v1", "0000_00_work.open-cluster-management.io_manifestworks.crd.yaml")
+	testEnvironment := &envtest.Environment{
+		CRDDirectoryPaths:     []string{filepath.Join(root, "config", "crd", "bases"), ocmCRDs, workCRDs},
+		BinaryAssetsDirectory: assets,
+	}
 	config, err := testEnvironment.Start()
 	if err != nil {
 		t.Fatalf("start envtest: %v", err)
 	}
-	defer testEnvironment.Stop()
+	defer func() {
+		if err := testEnvironment.Stop(); err != nil {
+			t.Logf("stop envtest: %v", err)
+		}
+	}()
 	scheme := runtimeapi.NewScheme()
 	if err := corev1.AddToScheme(scheme); err != nil {
 		t.Fatal(err)
@@ -161,7 +174,8 @@ func TestControllerObjectsCanBeStoredWithOCMTypes(t *testing.T) {
 		t.Fatal(err)
 	}
 	ctx := context.Background()
-	if err := clientset.Create(ctx, &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "kubecell-system"}}); err != nil {
+	ns := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "kubecell-system"}}
+	if err := clientset.Create(ctx, ns); err != nil {
 		t.Fatal(err)
 	}
 	if err := clientset.Create(ctx, &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "managed-a"}}); err != nil {
@@ -188,6 +202,7 @@ func TestControllerObjectsCanBeStoredWithOCMTypes(t *testing.T) {
 	}
 }
 
+// nolint:gocyclo // End-to-end scenario test; sequential assertions mirror the reconcile ordering under test.
 func TestVirtualClusterReconcilerCreatesOrderedWorksInEnvtest(t *testing.T) {
 	assets := os.Getenv("KUBEBUILDER_ASSETS")
 	if assets == "" {
@@ -202,8 +217,10 @@ func TestVirtualClusterReconcilerCreatesOrderedWorksInEnvtest(t *testing.T) {
 		}
 		goModCache = filepath.Join(home, "go", "pkg", "mod")
 	}
-	ocmCRDs := filepath.Join(goModCache, "open-cluster-management.io", "api@v1.3.0", "cluster", "v1", "0000_00_clusters.open-cluster-management.io_managedclusters.crd.yaml")
-	workCRDs := filepath.Join(goModCache, "open-cluster-management.io", "api@v1.3.0", "work", "v1", "0000_00_work.open-cluster-management.io_manifestworks.crd.yaml")
+	ocmCRDs := filepath.Join(goModCache, "open-cluster-management.io", "api@v1.3.0",
+		"cluster", "v1", "0000_00_clusters.open-cluster-management.io_managedclusters.crd.yaml")
+	workCRDs := filepath.Join(goModCache, "open-cluster-management.io", "api@v1.3.0",
+		"work", "v1", "0000_00_work.open-cluster-management.io_manifestworks.crd.yaml")
 	testEnvironment := &envtest.Environment{
 		CRDDirectoryPaths:     []string{filepath.Join(root, "config", "crd", "bases"), ocmCRDs, workCRDs},
 		BinaryAssetsDirectory: assets,
@@ -275,38 +292,47 @@ func TestVirtualClusterReconcilerCreatesOrderedWorksInEnvtest(t *testing.T) {
 			Addresses:  []corev1.NodeAddress{{Type: corev1.NodeInternalIP, Address: "203.0.113.10"}},
 		},
 	}}}
-	reconciler := &controller.VirtualClusterReconciler{Client: clientset, HostReaderFactory: fakeHostReaderFactory{nodes: hostNodes}}
+	reconciler := &controller.VirtualClusterReconciler{
+		Client:            clientset,
+		HostReaderFactory: fakeHostReaderFactory{nodes: hostNodes},
+	}
 	request := reconcile.Request{NamespacedName: client.ObjectKeyFromObject(cluster)}
 	if _, err := reconciler.Reconcile(ctx, request); err != nil {
 		t.Fatalf("first reconcile: %v", err)
 	}
 	names := helpers.NamesForVirtualCluster(cluster.Namespace, cluster.Name, cluster.UID)
 	foundation := &workv1.ManifestWork{}
-	if err := clientset.Get(ctx, types.NamespacedName{Name: names.FoundationWork, Namespace: "managed-a"}, foundation); err != nil {
+	foundationKey := types.NamespacedName{Name: names.FoundationWork, Namespace: "managed-a"}
+	if err := clientset.Get(ctx, foundationKey, foundation); err != nil {
 		works := &workv1.ManifestWorkList{}
 		if listErr := clientset.List(ctx, works, client.InNamespace("managed-a")); listErr == nil {
-			t.Logf("VirtualCluster UID=%q expected foundation=%q actual works=%v", cluster.UID, names.FoundationWork, func() []string {
-				result := make([]string, 0, len(works.Items))
-				for _, item := range works.Items {
-					result = append(result, item.Name)
-				}
-				return result
-			}())
+			t.Logf("VirtualCluster UID=%q expected foundation=%q actual works=%v",
+				cluster.UID, names.FoundationWork, func() []string {
+					result := make([]string, 0, len(works.Items))
+					for _, item := range works.Items {
+						result = append(result, item.Name)
+					}
+					return result
+				}())
 		}
 		t.Fatalf("get Foundation Work: %v", err)
 	}
 	instance := &workv1.ManifestWork{}
-	if err := clientset.Get(ctx, types.NamespacedName{Name: names.InstanceWork, Namespace: "managed-a"}, instance); err == nil {
+	instanceKey := types.NamespacedName{Name: names.InstanceWork, Namespace: "managed-a"}
+	if err := clientset.Get(ctx, instanceKey, instance); err == nil {
 		t.Fatal("Instance Work exists before Foundation is Applied")
 	}
-	foundation.Status.Conditions = []metav1.Condition{{Type: workv1.WorkApplied, Status: metav1.ConditionTrue, Reason: "Applied", LastTransitionTime: metav1.Now()}}
+	foundation.Status.Conditions = []metav1.Condition{{
+		Type: workv1.WorkApplied, Status: metav1.ConditionTrue,
+		Reason: "Applied", LastTransitionTime: metav1.Now(),
+	}}
 	if err := clientset.Status().Update(ctx, foundation); err != nil {
 		t.Fatalf("update Foundation status: %v", err)
 	}
 	if _, err := reconciler.Reconcile(ctx, request); err != nil {
 		t.Fatalf("second reconcile: %v", err)
 	}
-	if err := clientset.Get(ctx, types.NamespacedName{Name: names.InstanceWork, Namespace: "managed-a"}, instance); err != nil {
+	if err := clientset.Get(ctx, instanceKey, instance); err != nil {
 		t.Fatalf("get Instance Work: %v", err)
 	}
 	updated := &api.VirtualCluster{}
@@ -366,7 +392,9 @@ func newVirtualClusterFixture(namespace, name, cellNamespace, cellName, classNam
 func markCellReady(cell *api.Cell) {
 	free := resource.MustParse("100Gi")
 	cell.Status.Phase = api.CellPhaseReady
-	cell.Status.ManagedCluster = api.ManagedClusterStatus{Name: cell.Spec.ManagedClusterRef.Name, Joined: true, Available: true, LeaseFresh: true}
+	cell.Status.ManagedCluster = api.ManagedClusterStatus{
+		Name: cell.Spec.ManagedClusterRef.Name, Joined: true, Available: true, LeaseFresh: true,
+	}
 	cell.Status.Provider = api.ProviderStatus{
 		K3kVersion:      platform.K3kVersion,
 		NamespaceReady:  true,
@@ -375,7 +403,10 @@ func markCellReady(cell *api.Cell) {
 		CNIReady:        true,
 		TopoLVMReady:    true,
 	}
-	cell.Status.Conditions = []metav1.Condition{{Type: "InventoryFresh", Status: metav1.ConditionTrue, Reason: "HostInventoryObserved", LastTransitionTime: metav1.Now()}}
+	cell.Status.Conditions = []metav1.Condition{{
+		Type: "InventoryFresh", Status: metav1.ConditionTrue,
+		Reason: "HostInventoryObserved", LastTransitionTime: metav1.Now(),
+	}}
 	cell.Status.Nodes = []api.CellNodeStatus{{
 		Name:    "host-node-a",
 		Profile: "ascend-910b",
@@ -425,7 +456,8 @@ func (f fakeHostReader) GetResourceQuota(context.Context, string, string) (*core
 	return nil, nil
 }
 
-func (f fakeHostReader) GetPersistentVolumeClaim(context.Context, string, string) (*corev1.PersistentVolumeClaim, error) {
+func (f fakeHostReader) GetPersistentVolumeClaim(context.Context, string, string) (
+	*corev1.PersistentVolumeClaim, error) {
 	return nil, nil
 }
 
@@ -438,7 +470,7 @@ type fakeHostReaderFactory struct {
 }
 
 func (f fakeHostReaderFactory) ForCell(context.Context, *api.Cell) (controller.VirtualNodeHostReader, error) {
-	return fakeHostReader{nodes: f.nodes}, nil
+	return fakeHostReader(f), nil
 }
 
 func kubernetesClient(config *rest.Config) (client.Client, error) {

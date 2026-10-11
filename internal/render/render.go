@@ -193,15 +193,14 @@ func stringSliceAny(values []string) []any {
 func merge(left, right map[string]string) map[string]string {
 	result := map[string]string{}
 	for key, value := range left {
-		result[string(key)] = value
+		result[key] = value
 	}
 	for key, value := range right {
-		result[string(key)] = value
+		result[key] = value
 	}
 	return result
 }
 func networkPolicy(name, namespace string, labels map[string]string, spec map[string]any) map[string]any {
-	spec["podSelector"] = spec["podSelector"]
 	return map[string]any{"apiVersion": "networking.k8s.io/v1", "kind": "NetworkPolicy", "metadata": map[string]any{"name": name, "namespace": namespace, "labels": labels}, "spec": spec}
 }
 func toUnstructured(value map[string]any) (*unstructured.Unstructured, error) {
@@ -215,8 +214,9 @@ func toUnstructured(value map[string]any) (*unstructured.Unstructured, error) {
 // ChildIngressBackend is a snapshot of a child-cluster Ingress plus its backend Service/Endpoints.
 // A nil Service/Endpoints means it could not be read, so the backend rule is skipped (eventual consistency on the child side).
 type ChildIngressBackend struct {
-	Ingress   networkingv1.Ingress
-	Service   *corev1.Service
+	Ingress networkingv1.Ingress
+	Service *corev1.Service
+	// nolint:staticcheck // corev1.Endpoints deprecation requires migrating to discoveryv1.EndpointSlice; tracked separately.
 	Endpoints *corev1.Endpoints
 }
 
@@ -332,6 +332,7 @@ func mirrorService(name, namespace string, labels map[string]string, port int32)
 	return map[string]any{"apiVersion": "v1", "kind": "Service", "metadata": map[string]any{"name": name, "namespace": namespace, "labels": labels}, "spec": map[string]any{"ports": []any{map[string]any{"protocol": "TCP", "port": int64(port), "targetPort": int64(port)}}}}
 }
 
+// nolint:staticcheck // corev1.Endpoints deprecation requires migrating to discoveryv1.EndpointSlice; tracked separately.
 func mirrorEndpoints(name, namespace string, labels map[string]string, source *corev1.Endpoints) map[string]any {
 	subsets := []any{}
 	if source != nil {

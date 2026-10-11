@@ -19,7 +19,7 @@ import (
 func testWorkCluster() api.VirtualCluster {
 	return api.VirtualCluster{
 		ObjectMeta: metav1.ObjectMeta{Name: "training", Namespace: "team-a", UID: "cluster-uid"},
-		Spec:       api.VirtualClusterSpec{CellRef: api.ObjectReference{Name: "cell-a"}, ClassRef: api.ObjectReference{Name: "small"}},
+		Spec:       api.VirtualClusterSpec{CellRef: api.ObjectReference{Name: testProxyCellName}, ClassRef: api.ObjectReference{Name: "small"}},
 	}
 }
 
@@ -58,14 +58,14 @@ func TestBuildFoundationWorkTargetsManagedClusterNamespace(t *testing.T) {
 	cluster := testWorkCluster()
 	resolved := testResolvedSnapshot()
 	names := testWorkNames()
-	work, err := BuildFoundationWork(cluster, resolved, names, "cell-a")
+	work, err := BuildFoundationWork(cluster, resolved, names, testProxyCellName)
 	if err != nil {
 		t.Fatalf("BuildFoundationWork() error = %v", err)
 	}
 	if work.APIVersion != workv1.GroupVersion.String() || work.Kind != "ManifestWork" {
 		t.Fatalf("work identity = %s/%s", work.APIVersion, work.Kind)
 	}
-	if work.Namespace != "cell-a" {
+	if work.Namespace != testProxyCellName {
 		t.Fatalf("work namespace = %q, want cell-a", work.Namespace)
 	}
 	if work.Name != names.FoundationWork {
@@ -80,7 +80,7 @@ func TestBuildFoundationWorkTargetsManagedClusterNamespace(t *testing.T) {
 	if work.Labels[helpers.LabelVirtualClusterUID] != "cluster-uid" {
 		t.Fatalf("UID label = %q", work.Labels[helpers.LabelVirtualClusterUID])
 	}
-	if work.Labels[helpers.LabelCellName] != "cell-a" {
+	if work.Labels[helpers.LabelCellName] != testProxyCellName {
 		t.Fatalf("cell label = %q", work.Labels[helpers.LabelCellName])
 	}
 	if work.Labels[helpers.LabelProfileHash] != resolved.ProfileHash {
@@ -92,7 +92,7 @@ func TestBuildFoundationWorkRendersQuotaAndNetworkPolicy(t *testing.T) {
 	cluster := testWorkCluster()
 	resolved := testResolvedSnapshot()
 	names := testWorkNames()
-	work, err := BuildFoundationWork(cluster, resolved, names, "cell-a")
+	work, err := BuildFoundationWork(cluster, resolved, names, testProxyCellName)
 	if err != nil {
 		t.Fatalf("BuildFoundationWork() error = %v", err)
 	}
@@ -123,11 +123,11 @@ func TestBuildInstanceWorkContainsOnlyK3kClusterAndPolicy(t *testing.T) {
 	cluster := testWorkCluster()
 	resolved := testResolvedSnapshot()
 	names := testWorkNames()
-	work, err := BuildInstanceWork(cluster, resolved, names, "cell-a", nil)
+	work, err := BuildInstanceWork(cluster, resolved, names, testProxyCellName, nil)
 	if err != nil {
 		t.Fatalf("BuildInstanceWork() error = %v", err)
 	}
-	if work.Namespace != "cell-a" {
+	if work.Namespace != testProxyCellName {
 		t.Fatalf("work namespace = %q, want cell-a", work.Namespace)
 	}
 	if work.Name != names.InstanceWork {
@@ -167,7 +167,7 @@ func TestBuildInstanceWorkRendersK3kClusterSpec(t *testing.T) {
 	cluster := testWorkCluster()
 	resolved := testResolvedSnapshot()
 	names := testWorkNames()
-	work, err := BuildInstanceWork(cluster, resolved, names, "cell-a", nil)
+	work, err := BuildInstanceWork(cluster, resolved, names, testProxyCellName, nil)
 	if err != nil {
 		t.Fatalf("BuildInstanceWork() error = %v", err)
 	}
@@ -202,7 +202,7 @@ func TestBuildInstanceWorkProjectsChildPolicyFromResolvedQuota(t *testing.T) {
 	resolved := testResolvedSnapshot()
 	names := testWorkNames()
 
-	work, err := BuildInstanceWork(cluster, resolved, names, "cell-a", nil)
+	work, err := BuildInstanceWork(cluster, resolved, names, testProxyCellName, nil)
 	if err != nil {
 		t.Fatalf("BuildInstanceWork() error = %v", err)
 	}

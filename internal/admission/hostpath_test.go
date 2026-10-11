@@ -22,7 +22,7 @@ func TestValidateReflectedPodRejectsAnyHostPathType(t *testing.T) {
 	} {
 		pod := hostPathPod("/workspace", volumeType)
 		violations := ValidateReflectedPod(pod, testPolicy())
-		if !containsExactViolation(violations, platform.HostPathDenyMessage) {
+		if !containsExactViolation(violations) {
 			t.Fatalf("type %q violations = %v, want %q", volumeType, violations, platform.HostPathDenyMessage)
 		}
 	}
@@ -33,7 +33,7 @@ func TestValidateReflectedPodRejectsHostPathRegardlessOfPath(t *testing.T) {
 	for _, path := range []string{"/", "/workspace", "/workspace/cache", "/data/vcluster-demo", "/data/vcluster-demo/cache"} {
 		t.Run(strings.ReplaceAll(path, "/", "_"), func(t *testing.T) {
 			violations := ValidateReflectedPod(hostPathPod(path, volumeType), testPolicy())
-			if !containsExactViolation(violations, platform.HostPathDenyMessage) {
+			if !containsExactViolation(violations) {
 				t.Fatalf("path %q violations = %v, want %q", path, violations, platform.HostPathDenyMessage)
 			}
 		})
@@ -48,7 +48,7 @@ func TestValidateReflectedPodRejectsNilHostPathType(t *testing.T) {
 			Containers: []corev1.Container{{Name: "work", Image: "example/work"}},
 		},
 	}
-	if violations := ValidateReflectedPod(pod, testPolicy()); !containsExactViolation(violations, platform.HostPathDenyMessage) {
+	if violations := ValidateReflectedPod(pod, testPolicy()); !containsExactViolation(violations) {
 		t.Fatalf("violations = %v, want %q", violations, platform.HostPathDenyMessage)
 	}
 }
@@ -79,7 +79,7 @@ func TestValidateReflectedPodRejectsEachHostPathVolume(t *testing.T) {
 
 func TestValidateReflectedPodWithoutPlacementRejectsHostPath(t *testing.T) {
 	pod := hostPathPod("/workspace/cache", corev1.HostPathDirectoryOrCreate)
-	if violations := ValidateReflectedPodWithoutPlacement(pod, testPolicy()); !containsExactViolation(violations, platform.HostPathDenyMessage) {
+	if violations := ValidateReflectedPodWithoutPlacement(pod, testPolicy()); !containsExactViolation(violations) {
 		t.Fatalf("violations = %v, want %q", violations, platform.HostPathDenyMessage)
 	}
 }
@@ -113,9 +113,9 @@ func TestValidateReflectedPodAllowsPodWithoutHostPath(t *testing.T) {
 	}
 }
 
-func containsExactViolation(violations []string, want string) bool {
+func containsExactViolation(violations []string) bool {
 	for _, violation := range violations {
-		if violation == want {
+		if violation == platform.HostPathDenyMessage {
 			return true
 		}
 	}
